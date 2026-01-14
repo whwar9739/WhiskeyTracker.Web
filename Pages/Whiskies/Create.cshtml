@@ -1,0 +1,60 @@
+@page
+@model WhiskeyTracker.Web.Pages.Whiskies.CreateModel
+@{
+    ViewData["Title"] = "Log a New Whiskey";
+}
+
+<div class="container mt-4">
+    <h1>Log a New Whiskey</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-6">
+            <form method="post" enctype="multipart/form-data">
+                <div class="form-group mb-3">
+                    <label asp-for="NewWhiskey.Distillery" class="form-label">Distillery</label>
+                    <input asp-for="NewWhiskey.Distillery" class="form-control" placeholder="e.g. Macallan" />
+                    <span asp-validation-for="NewWhiskey.Distillery" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="NewWhiskey.Name" class="form-label">Name / Expression</label>
+                    <input asp-for="NewWhiskey.Name" class="form-control" placeholder="e.g. 12 Year Sherry Oak" />
+                    <span asp-validation-for="NewWhiskey.Name" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="NewWhiskey.Region" class="form-label">Region</label>
+                    <input asp-for="NewWhiskey.Region" class="form-control" placeholder="e.g. Speyside" />
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="NewWhiskey.Age" class="form-label"></label>
+                        <input asp-for="NewWhiskey.Age" class="form-control" placeholder="e.g. 12" />
+                        <span asp-validation-for="NewWhiskey.Age" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="NewWhiskey.ABV" class="form-label"></label>
+                        <input asp-for="NewWhiskey.ABV" class="form-control" placeholder="e.g. 43.5" />
+                        <span asp-validation-for="NewWhiskey.ABV" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="NewWhiskey.CaskType" class="form-label"></label>
+                    <input asp-for="NewWhiskey.CaskType" class="form-control" placeholder="e.g. Sherry Oak" />
+                </div>
+
+                <div class="form-group mb-3">
+                    <label class="form-label">Bottle Image</label>
+                    <input type="file" asp-for="ImageUpload" class="form-control" accept="image/*" />
+                </div>
+
+                <div class="form-group">
+                    <input type="submit" value="Log Whiskey" class="btn btn-primary" />
+                    <a asp-page="/Index" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

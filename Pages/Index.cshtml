@@ -1,0 +1,112 @@
+﻿@page
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="text-center mb-5">
+    <h1 class="display-4 fw-bold">Whiskey Tracker</h1>
+    <p class="lead text-muted">Catalog your collection. Journal your tastings.</p>
+</div>
+
+<div class="row mb-5 align-items-center">
+    <div class="col-md-6">
+        <h1 class="display-5 fw-bold">Welcome Back!</h1>
+        <p class="text-muted">Here is what's happening in your cellar.</p>
+    </div>
+    <div class="col-md-6">
+        <div class="row g-2 text-center">
+            <div class="col-4">
+                <div class="p-3 border bg-light rounded">
+                    <h2 class="fw-bold text-primary mb-0">@Model.TotalWhiskies</h2>
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Expressions</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-3 border bg-light rounded">
+                    <h2 class="fw-bold text-success mb-0">@Model.OpenBottles</h2>
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Open Bottles</small>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-3 border bg-light rounded">
+                    <h2 class="fw-bold text-warning mb-0">@Model.TotalSessions</h2>
+                    <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Sessions</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow border-primary">
+            <div class="card-body text-center p-5">
+                <h2 class="card-title text-primary mb-3">🥃 Tasting Session</h2>
+                <p class="card-text mb-4">
+                    Pouring a dram? Start a guided session to record your notes and ratings in real-time.
+                </p> 
+                <div class="d-grid">
+                    <a asp-page="/Tasting/Create" class="btn btn-primary btn-lg">Start New Session</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow border-secondary">
+            <div class="card-body text-center p-5">
+                <h2 class="card-title text-secondary mb-3">➕ Log New</h2>
+                <p class="card-text mb-4">
+                    Picked up something new? Add it to your database.
+                </p>
+                <div class="d-grid">
+                    <a asp-page="/Whiskies/Create" class="btn btn-success btn-lg">Add Bottle</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 shadow border-secondary">
+            <div class="card-body text-center p-5">
+                <h2 class="card-title text-secondary mb-3">📚 My Whiskies</h2>
+                <p class="card-text mb-4">
+                    Add new purchases, update inventory status, or browse your existing collection.
+                </p>
+                <div class="d-grid">
+                    <a asp-page="/Whiskies/Index" class="btn btn-outline-secondary btn-lg">View Collection</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4 class="mb-3 border-bottom pb-2">Recent Sips</h4>
+@if (Model.RecentNotes.Count == 0)
+{
+    <p class="text-muted fst-italic">No tastings recorded yet. Start your first session above!</p>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var note in Model.RecentNotes)
+        {
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0 fw-bold">@note.Whiskey.Name</h6>
+                    <small class="text-muted">@note.Notes</small>
+                </div>
+                <div class="text-end">
+                    <span class="text-warning">
+                        @for (int i = 0; i < note.Rating; i++)
+                        {
+                            <span>★</span>
+                        }
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+}

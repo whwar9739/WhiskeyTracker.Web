@@ -1,0 +1,33 @@
+# --- Build & Output (No need to index compiled code) ---
+bin/
+obj/
+
+# --- IDE & Tooling ---
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+
+# --- Third-Party Libraries (Reduce noise) ---
+# The AI knows how Bootstrap/jQuery work; it doesn't need to read the source files.
+wwwroot/lib/
+
+# --- Static Assets ---
+# Images and binary assets consume context window with no value.
+wwwroot/images/
+*.ico
+*.jpg
+*.png
+*.gif
+
+# --- Configuration & Secrets ---
+# Prevent the AI from reading potential connection strings or API keys.
+appsettings.json
+appsettings.*.json
+launchSettings.json
+
+# --- Auto-Generated Code ---
+# Migrations are useful for history but can confuse the AI about current model state.
+# It is better to have the AI look at your 'Data' classes instead.
+Migrations/

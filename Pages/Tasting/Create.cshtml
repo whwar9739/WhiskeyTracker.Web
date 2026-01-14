@@ -1,0 +1,27 @@
+@page
+@model WhiskeyTracker.Web.Pages.Tasting.CreateModel
+@{ ViewData["Title"] = "New Session";}
+
+<div class="container mt-5" style="max-width: 600px;">
+    <div class="card shadow">
+        <div class="card-body p-5 text-center">
+            <h1 class="mb-4">🥃 Start a Tasting</h1>
+            <p class="text-muted">Gather your bottles and glasses.</p>
+
+            <form method="post">
+                <div class"form-floating mb-3">
+                    <input asp-for="Session.Title" class="form-control" placeholder="Title" />
+                    <label asp-for="Session.Title">Session Title</label>
+                </div>
+                <div class="form-floating mb-4">
+                    <input asp-for="Session.Date" type="date" class="form-control" />
+                    <label asp-for="Session.Date">Date</label>
+                </div>
+
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-lg btn-primary">Begin Session</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

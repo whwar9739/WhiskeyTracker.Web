@@ -1,0 +1,51 @@
+@page "{id:int}"
+@model WhiskeyTracker.Web.Pages.Whiskies.AddBottleModel
+@{
+    ViewData["Title"] = "Add to Inventory";
+}
+
+<div class="container mt-4">
+    <h1>Add to Inventory</h1>
+    <h3>Adding a bottle of: <span class="text-primary">@Model.WhiskeyName</span></h3>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <form method="post">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+                <input type="hidden" asp-for="NewBottle.WhiskeyId" />
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="NewBottle.PurchasePrice" class="form-label">Price Paid</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="NewBottle.PurchasePrice" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="NewBottle.PurchaseDate" class="form-label">Purchase Date</label>
+                        <input asp-for="NewBottle.PurchaseDate" type="date" class="form-control" />
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="NewBottle.PurchaseLocation" class="form-label">Location (Store/City)</label>
+                    <input asp-for="NewBottle.PurchaseLocation" class="form-control" placeholder="e.g. Total Wine" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="NewBottle.Status" class="form-label">Bottle Status</label>
+                    <select asp-for="NewBottle.Status" class="form-select" asp-items="Html.GetEnumSelectList<WhiskeyTracker.Web.Data.BottleStatus>()"></select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="NewBottle.BottlingDate" class="form-label">Bottling Date (Optional)</label>
+                    <input asp-for="NewBottle.BottlingDate" type="date" class="form-control" />
+                    <small class="text-muted">Useful for tracking specific batches.</small>
+                </div>
+                <div class="mt-4">
+                    <input type="submit" value="Add to Inventory" class="btn btn-success" />
+                    <a asp-page="./Details" asp-route-id="@Model.NewBottle.WhiskeyId" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

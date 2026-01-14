@@ -1,0 +1,97 @@
+@page "{id:int}"
+@model WhiskeyTracker.Web.Pages.Whiskies.DetailsModel
+@{
+    ViewData["Title"] = "Details";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            @if (!string.IsNullOrEmpty(Model.Whiskey.ImageFileName))
+            {
+                <img src="~/images/@Model.Whiskey.ImageFileName" class="img-fluid rounded shadow mb-3" alt="@Model.Whiskey.Name" />
+            }
+            else
+            {
+                <div class="alert alert-secondary text-center p-5 mb-3">No Image Available</div>
+            }
+
+            <div class="d-grid gap-2">
+                <a asp-page="./Edit" asp-route-id="@Model.Whiskey.Id" class="btn btn-warning">Edit Definition</a>
+                <a asp-page="./Index" class="btn btn-outline-secondary">Back to Library</a>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <h1 class="display-5">@Model.Whiskey.Distillery</h1>
+            <h2 class="text-muted h4">@Model.Whiskey.Name</h2>
+            <hr />
+
+            <dl class="row">
+                <dt class="col-sm-4">Region</dt>
+                <dd class="col-sm-8">@Model.Whiskey.Region</dd>
+
+                <dt class="col-sm-4">Age</dt>
+                <dd class="col-sm-8">
+                    @(Model.Whiskey.Age.HasValue ? $"{Model.Whiskey.Age} Years" : "No Age Statement")
+                </dd>
+
+                <dt class="col-sm-4">ABV</dt>
+                <dd class="col-sm-8">
+                    @(Model.Whiskey.ABV.HasValue ? $"{Model.Whiskey.ABV}%" : "-")
+                </dd>
+
+                <dt class="col-sm-4">Cask Type</dt>
+                <dd class="col-sm-8">@Model.Whiskey.CaskType</dd>
+            </dl>
+
+            <div class="d-flex justify-content-between align-items-center mt-5 mb-3 bg-light p-2 rounded">
+                <h3 class="h5 m-0">Inventory History</h3>
+                <a asp-page="./AddBottle" asp-route-id="@Model.Whiskey.Id" class="btn btn-sm btn-success">
+                    + Add Bottle
+                </a>
+            </div>
+
+            @if (Model.Whiskey.Bottles.Count == 0)
+            {
+                <p class="text-muted fst-italic">You haven't logged any bottles of this yet.</p>
+            }
+            else
+            {
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Purchased</th>
+                            <th>Price</th>
+                            <th>Location</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var bottle in Model.Whiskey.Bottles)
+                        {
+                            <tr>
+                                <td>
+                                    @if(bottle.Status == WhiskeyTracker.Web.Data.BottleStatus.Empty) {
+                                         <span class="badge bg-secondary">Empty</span>
+                                    } else if (bottle.Status == WhiskeyTracker.Web.Data.BottleStatus.Opened) {
+                                         <span class="badge bg-warning text-dark">Opened</span>
+                                    } else {
+                                         <span class="badge bg-success">Full</span>
+                                    }
+                                </td>
+                                <td>@(bottle.PurchaseDate.HasValue ? bottle.PurchaseDate.Value.ToShortDateString() : "-")</td>
+                                <td>@(bottle.PurchasePrice.HasValue ? bottle.PurchasePrice.Value.ToString("C") : "-")</td>
+                                <td>@bottle.PurchaseLocation</td>
+                                <td>
+                                    <a asp-page="./EditBottle" asp-route-id="@bottle.Id" class="btn btn-sm btn-warning">Edit</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>

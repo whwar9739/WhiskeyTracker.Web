@@ -1,0 +1,87 @@
+@page "{sessionId:int}"
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@model WhiskeyTracker.Web.Pages.Tasting.WizardModel
+@{ ViewData["Title"] = "Tasting Wizard"; }
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h6 class="text-muted text-uppercase mb1">Current Session</h6>
+            <h2>@Model.Session.Title</h2>
+        </div>
+        <a asp-page="/Index" class="btn btn-outline-secondary">Finish & Exit</a>
+    </div>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card border-primary shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="m-0">Pour #@(Model.Session.Notes.Count + 1)</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="All" class="alert alert-danger"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Select Bottle</label>
+                            <select asp-for="NewNote.WhiskeyId" class="form-select" asp-items="Model.WhiskeyOptions">
+                                <option value="">-- Choose Whiskey --</option>
+                            </select>
+                            <span asp-validation-for="NewNote.WhiskeyId" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <div class="btn-group w-100" role="group">
+                                @for(int i=1; i<=5; i++)
+                                {
+                                    <input type="radio" class="btn-check" name="NewNote.Rating" id="rating-@i" value="@i" autocomplete="off" @(i==3 ? "checked" : "") />
+                                    <label class="btn btn-outline-warning" for="rating-@i">@i ★</label>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="NewNote.Notes" class="form-label">Impressions</label>
+                            <textarea asp-for="NewNote.Notes" class="form-control" rows="3" placeholder="Nose, Palate, Finish..."></textarea>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Log & Pour Next</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <h4 class="mb-3">Tonight's Lineup</h4>
+            @if (Model.Session.Notes.Count == 0)
+            {
+                <div class="alert alert-light border text-center p-4">
+                    <p class="mb-0 text-muted">Nothing tasted yet. Pour the first dram!</p>
+                </div>
+            }
+            else
+            {
+                <div class="list-group">
+                    @foreach (var note in ((IEnumerable<dynamic>)Model.Session.Notes).Reverse())
+                    {
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">
+                                    <span class="badge bg-secondary rounded-pill me-2">#@note.OrderIndex</span>
+                                    @note.Whiskey.Name
+                                </h5>
+                                <small class="text-warning">
+                                    @for(int k=0; k<note.Rating; k++){ <span>★</span> }
+                                </small>
+                            </div>
+                            <p class="mb-1 mt-2">@note.Notes</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

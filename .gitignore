@@ -1,0 +1,33 @@
+# --- Build Output ---
+[Bb]in/
+[Oo]bj/
+
+# --- IDE & Editor files ---
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# --- NuGet ---
+*.nupkg
+*.nuget.props
+*.nuget.targets
+project.lock.json
+project.nuget.cache
+
+# --- OS Generated ---
+.DS_Store
+Thumbs.db
+
+# --- User Uploads (Optional) ---
+# If you don't want to commit every whiskey photo you test with, uncomment the lines below.
+# This keeps the folder but ignores the files inside it.
+wwwroot/images/*
+!wwwroot/images/7b8447c6-93be-43e5-94c1-af67c96de5e1_stockWhiskeyBottle.jpg
+!wwwroot/images/.gitkeep
+
+# --- Runtime & Logs ---
+*.log
+appsettings.Local.json
