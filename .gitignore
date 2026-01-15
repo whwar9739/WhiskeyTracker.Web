@@ -1,6 +1,7 @@
 # --- Build Output ---
 [Bb]in/
 [Oo]bj/
+TestResults/
 
 # --- IDE & Editor files ---
 .vs/
@@ -22,11 +23,10 @@ project.nuget.cache
 Thumbs.db
 
 # --- User Uploads (Optional) ---
-# If you don't want to commit every whiskey photo you test with, uncomment the lines below.
-# This keeps the folder but ignores the files inside it.
-wwwroot/images/*
-!wwwroot/images/7b8447c6-93be-43e5-94c1-af67c96de5e1_stockWhiskeyBottle.jpg
-!wwwroot/images/.gitkeep
+# Updated path: Now points explicitly to the Web project's wwwroot
+WhiskeyTracker.Web/wwwroot/images/*
+!WhiskeyTracker.Web/wwwroot/images/7b8447c6-93be-43e5-94c1-af67c96de5e1_stockWhiskeyBottle.jpg
+!WhiskeyTracker.Web/wwwroot/images/.gitkeep
 
 # --- Runtime & Logs ---
 *.log

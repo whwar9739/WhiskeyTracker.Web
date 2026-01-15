@@ -1,0 +1,32 @@
+# --- Build & Output ---
+bin/
+obj/
+TestResults/
+
+# --- IDE & Tooling ---
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+
+# --- Third-Party Libraries ---
+# Update: Point specifically to the Web project
+WhiskeyTracker.Web/wwwroot/lib/
+
+# --- Static Assets ---
+WhiskeyTracker.Web/wwwroot/images/
+*.ico
+*.jpg
+*.png
+*.gif
+
+# --- Configuration & Secrets ---
+# These match recursively, so they will cover both Web and Test projects
+appsettings.json
+appsettings.*.json
+launchSettings.json
+
+# --- Auto-Generated Code ---
+# Update: Migrations are inside the Web project
+WhiskeyTracker.Web/Migrations/
