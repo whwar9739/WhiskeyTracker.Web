@@ -77,7 +77,6 @@ public class BottleTests
             Bottle = new Bottle { Id = 10, Status = BottleStatus.Opened }
         };
 
-        // We must attach the entity to simulate it being tracked in a real web request
         var result = await pageModel.OnPostAsync();
 
         Assert.IsType<RedirectToPageResult>(result);
@@ -102,3 +101,4 @@ public class BottleTests
     }
 
 }
+
