@@ -11,6 +11,9 @@ public class TastingNote
 
     public int WhiskeyId { get; set; }
     public Whiskey Whiskey { get; set; } = null!;
+    
+    public int? BottleId { get; set; }
+    public Bottle? Bottle { get; set; }
 
     public int OrderIndex { get; set; }
 
@@ -18,5 +21,5 @@ public class TastingNote
     public int Rating { get; set; }
 
     [MaxLength(2000)]
-    public string Notes { get; set; } = string.Empty;
+    public string? Notes { get; set; } = string.Empty;
 }

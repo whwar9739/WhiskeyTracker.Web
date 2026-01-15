@@ -32,4 +32,6 @@ public class Bottle
     
     // Optional: You might want to track specific bottling dates for specific bottles
     public DateOnly? BottlingDate { get; set; } 
+
+    public List<TastingNote> TastingNotes { get; set; } = new();
 }

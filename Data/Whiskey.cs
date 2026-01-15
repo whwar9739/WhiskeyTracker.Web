@@ -32,6 +32,7 @@ public class Whiskey
     public string? ImageFileName { get; set; }
 
     public List<Bottle> Bottles { get; set; } = new();
+    public List<TastingNote> TastingNotes { get; set; } = new();
 
     // We'll add complex fields like Ratings, Notes, and Images in later slices!
 }

@@ -74,6 +74,7 @@ Follow these instructions to get the project running on your local machine.
 * **Stats Engine:** Advanced analytics (Cost per dram, favorite regions).
 * **Data Export:** Export collection to CSV/Excel.
 * **Global Ratings:** Refactor static whiskey ratings to be an average of all tasting session scores.
+* **Automated Unit Testing:** Add a test suite (xUnit or NUnit) to verify business logic and prevent regressions.
 
 ## 🤝 Contributing
 
