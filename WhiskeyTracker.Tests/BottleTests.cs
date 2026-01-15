@@ -54,7 +54,7 @@ public class BottleTests
         // Use FakeTimeProvider with any date, since this test doesn't check the date
         var pageModel = new AddBottleModel(context, new FakeTimeProvider(DateTimeOffset.Now))
         {
-            NewBottle = new Bottle { WhiskeyId = 1, PurchaseDate = DateOnly.MinValue }
+            NewBottle = new Bottle { WhiskeyId = 1, PurchaseDate = null }
         };
 
         var result = await pageModel.OnPostAsync();
@@ -100,4 +100,5 @@ public class BottleTests
         var result = await pageModel.OnPostAsync();
         Assert.IsType<NotFoundResult>(result);
     }
+
 }
