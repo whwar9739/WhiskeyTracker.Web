@@ -99,6 +99,7 @@ public class WhiskiesTests
         var whiskey = await context.Whiskies.FirstAsync();
         Assert.Equal("Test Whiskey", whiskey.Name);
         Assert.Contains("test.jpg", whiskey.ImageFileName); // Confirms filename was generated
+        mockFile.Verify(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // --- DETAILS TESTS ---

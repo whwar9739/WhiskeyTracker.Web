@@ -69,7 +69,7 @@ public class BottleTests
 
         Assert.IsType<RedirectToPageResult>(result);
         var savedBottle = await context.Bottles.FindAsync(10);
-        Assert.Equal(BottleStatus.Opened, savedBottle.Status);
+        Assert.Equal(BottleStatus.Opened, savedBottle!.Status);
     }
 
     [Fact]

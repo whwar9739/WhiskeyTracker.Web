@@ -17,7 +17,7 @@ public class TastingTests
     }
 
     [Fact]
-    public async Task Create_InitializesDefaults_OnGet()
+    public void Create_InitializesDefaults_OnGet()
     {
         using var context = GetInMemoryContext();
         var pageModel = new CreateModel(context);
@@ -48,6 +48,6 @@ public class TastingTests
         Assert.Equal("Epic Night", savedSession.Title);
         
         // Verify the ID in the redirect matches the saved ID
-        Assert.Equal(savedSession.Id, redirect.RouteValues["sessionId"]);
+        Assert.Equal(savedSession.Id, redirect.RouteValues!["sessionId"]);
     }
 }
