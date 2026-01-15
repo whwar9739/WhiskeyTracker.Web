@@ -1,7 +1,7 @@
 # --- Build & Output ---
-bin/
-obj/
-TestResults/
+**/bin/
+**/obj/
+**/TestResults/
 
 # --- IDE & Tooling ---
 .vs/
@@ -23,9 +23,9 @@ WhiskeyTracker.Web/wwwroot/images/
 
 # --- Configuration & Secrets ---
 # These match recursively, so they will cover both Web and Test projects
-appsettings.json
-appsettings.*.json
-launchSettings.json
+**/appsettings.json
+**/appsettings.*.json
+**/launchSettings.json
 
 # --- Auto-Generated Code ---
 # Update: Migrations are inside the Web project
