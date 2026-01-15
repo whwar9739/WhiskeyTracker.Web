@@ -127,6 +127,17 @@
                                     <h6 class="mb-1 fw-bold">@note.TastingSession.Title</h6>
                                     <small class="text-muted">@note.TastingSession.Date.ToShortDateString()</small>
                                 </div>
+                                
+                                @if (note.Bottle != null)
+                                {
+                                    <div class="mb-2">
+                                        <small class="badge bg-light text-dark border">
+                                            <i class="bi bi-box-seam"></i> From Bottle purchased
+                                            @(note.Bottle.PurchaseDate?.ToShortDateString() ?? "Unknown")
+                                        </small>
+                                    </div>
+                                }
+
                                 <div class="mb-2">
                                     <span class="text-warning">
                                         @for (int i = 0; i < note.Rating; i++)
