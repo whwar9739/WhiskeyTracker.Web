@@ -1,0 +1,34 @@
+name: Whiskey Tracker CI
+
+# Trigger this workflow on Push to Main OR Pull Requests to Main
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Check out the code from the repo
+    - uses: actions/checkout@v4
+
+    # 2. Setup .NET 10 (Matches your project version)
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    # 3. Restore Dependencies (NuGet packages)
+    - name: Restore dependencies
+      run: dotnet restore WhiskeyTracker.sln
+
+    # 4. Build the Solution (Release Mode)
+    - name: Build
+      run: dotnet build WhiskeyTracker.sln --no-restore --configuration Release
+
+    # 5. Run the Unit Tests 🧪
+    - name: Test
+      run: dotnet test WhiskeyTracker.Tests/WhiskeyTracker.Tests.csproj --no-build --verbosity normal --configuration Release
