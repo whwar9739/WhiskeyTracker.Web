@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Pages.Whiskies;
 using Xunit;
@@ -17,29 +18,41 @@ public class BottleTests
         return new AppDbContext(options);
     }
 
-    [Fact]
+[Fact]
     public async Task AddBottle_PopulatesDefaults_OnGet()
     {
+        // 1. ARRANGE
         using var context = GetInMemoryContext();
         context.Whiskies.Add(new Whiskey { Id = 1, Name = "Parent Whiskey" });
         await context.SaveChangesAsync();
 
-        var pageModel = new AddBottleModel(context);
+        // FIX: Use your concrete Fake class, NOT a Mock
+        var fixedTime = new DateTimeOffset(2015, 10, 21, 0, 0, 0, TimeSpan.Zero);
+        var fakeTime = new FakeTimeProvider(fixedTime);
+
+        // Inject the fake into the PageModel
+        var pageModel = new AddBottleModel(context, fakeTime);
+        
+        // 2. ACT
         await pageModel.OnGetAsync(1);
 
+        // 3. ASSERT
         Assert.Equal("Parent Whiskey", pageModel.WhiskeyName);
         Assert.Equal(1, pageModel.NewBottle.WhiskeyId);
-        Assert.Equal(DateOnly.FromDateTime(DateTime.Today), pageModel.NewBottle.PurchaseDate);
+        
+        // Verify it used the date from your FakeTimeProvider
+        Assert.Equal(new DateOnly(2015, 10, 21), pageModel.NewBottle.PurchaseDate);
     }
 
-    [Fact]
+[Fact]
     public async Task AddBottle_SavesNewBottle_OnPost()
     {
         using var context = GetInMemoryContext();
         context.Whiskies.Add(new Whiskey { Id = 1, Name = "Parent" });
         await context.SaveChangesAsync();
 
-        var pageModel = new AddBottleModel(context)
+        // Use FakeTimeProvider with any date, since this test doesn't check the date
+        var pageModel = new AddBottleModel(context, new FakeTimeProvider(DateTimeOffset.Now))
         {
             NewBottle = new Bottle { WhiskeyId = 1, PurchaseDate = DateOnly.MinValue }
         };
