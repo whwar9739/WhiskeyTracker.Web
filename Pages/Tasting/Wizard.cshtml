@@ -1,7 +1,9 @@
 @page "{sessionId:int}"
 @using Microsoft.EntityFrameworkCore.Metadata.Internal
 @model WhiskeyTracker.Web.Pages.Tasting.WizardModel
-@{ ViewData["Title"] = "Tasting Wizard"; }
+@{
+    ViewData["Title"] = "Tasting Wizard";
+}
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center">
@@ -21,21 +23,51 @@
                 </div>
                 <div class="card-body">
                     <form method="post">
-                        <div asp-validation-summary="All" class="alert alert-danger"></div>
-                        <div class="mb-3">
-                            <label class="form-label">Select Bottle</label>
-                            <select asp-for="NewNote.WhiskeyId" class="form-select" asp-items="Model.WhiskeyOptions">
-                                <option value="">-- Choose Whiskey --</option>
+                        @if (TempData["SuccessMessage"] != null)
+                        {
+                            <div class="alert alert-success shadow-sm" role="alert">
+                                <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                            </div>
+                        }
+
+                        @if (!ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger shadow-sm" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> <strong>Hold on!</strong> Please check
+                                the fields below for errors.
+                            </div>
+                        }
+
+                        <div class="mb-3 p-2 bg-light border rounded">
+                            <label class="form-label fw-bold text-success">Option A: Pour from Inventory</label>
+                            <select asp-for="SelectedBottleId" class="form-select" asp-items="Model.BottleOptions">
+                                <option value="">-- Select from Shelf --</option>
                             </select>
-                            <span asp-validation-for="NewNote.WhiskeyId" class="text-danger"></span>
+                            <span asp-validation-for="SelectedBottleId" class="text-danger"></span>
+                            <small class="text-muted">Use this if you are drinking one of your own open bottles.</small>
                         </div>
+
+                        <div class="text-center mb-3 fw-bold text-muted">- OR -</div>
+
+                        <div class="mb-4 p-2 bg-light border rounded">
+                            <label class="form-label fw-bold text-primary">Option B: Select Whiskey</label>
+                            <select asp-for="SelectedWhiskeyId" class="form-select" asp-items="Model.WhiskeyOptions">
+                                <option value="">-- Select Whiskey --</option>
+                            </select>
+                            <span asp-validation-for="SelectedWhiskeyId" class="text-danger"></span>
+                            <small class="text-muted">Use this if you are at a bar, friend's house, or the bottle is
+                                finished.</small>
+                        </div>
+
+                        <hr />
 
                         <div class="mb-3">
                             <label class="form-label">Rating</label>
                             <div class="btn-group w-100" role="group">
-                                @for(int i=1; i<=5; i++)
+                                @for (int i = 1; i <= 5; i++)
                                 {
-                                    <input type="radio" class="btn-check" name="NewNote.Rating" id="rating-@i" value="@i" autocomplete="off" @(i==3 ? "checked" : "") />
+                                    <input type="radio" class="btn-check" name="NewNote.Rating" id="rating-@i" value="@i"
+                                        autocomplete="off" @(i == 3 ? "checked" : "")>
                                     <label class="btn btn-outline-warning" for="rating-@i">@i ★</label>
                                 }
                             </div>
@@ -43,7 +75,9 @@
 
                         <div class="mb-3">
                             <label asp-for="NewNote.Notes" class="form-label">Impressions</label>
-                            <textarea asp-for="NewNote.Notes" class="form-control" rows="3" placeholder="Nose, Palate, Finish..."></textarea>
+                            <textarea asp-for="NewNote.Notes" class="form-control" rows="3"
+                                placeholder="Nose, Palate, Finish..."></textarea>
+                            <span asp-validation-for="NewNote.Notes" class="text-danger"></span>
                         </div>
 
                         <div class="d-grid">
@@ -74,7 +108,10 @@
                                     @note.Whiskey.Name
                                 </h5>
                                 <small class="text-warning">
-                                    @for(int k=0; k<note.Rating; k++){ <span>★</span> }
+                                    @for (int k = 0; k < note.Rating; k++)
+                                    {
+                                        <span>★</span>
+                                    }
                                 </small>
                             </div>
                             <p class="mb-1 mt-2">@note.Notes</p>
@@ -85,3 +122,40 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        $(document).ready(function () {
+            // Find any element with the 'alert' class (Success OR Danger)
+            var $alerts = $('.alert');
+
+            if ($alerts.length) {
+                // Wait 4 seconds, then fade them out smoothly
+                setTimeout(function () {
+                    $alerts.fadeOut('slow');
+                }, 4000);
+            }
+        });
+    </script>
+
+    <script>
+        // Ensure only one of the two selects can be chosen
+        $(document).ready(function () {
+            $('#SelectedBottleId').change(function () {
+                if ($(this).val()) {
+                    $('#SelectedWhiskeyId').val('');
+                }
+            });
+
+            $('#SelectedWhiskeyId').change(function () {
+                if ($(this).val()) {
+                    $('#SelectedBottleId').val('');
+                }
+            });
+        });
+    </script>
+}

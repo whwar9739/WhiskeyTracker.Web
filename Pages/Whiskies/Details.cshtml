@@ -9,7 +9,8 @@
         <div class="col-md-4">
             @if (!string.IsNullOrEmpty(Model.Whiskey.ImageFileName))
             {
-                <img src="~/images/@Model.Whiskey.ImageFileName" class="img-fluid rounded shadow mb-3" alt="@Model.Whiskey.Name" />
+                <img src="~/images/@Model.Whiskey.ImageFileName" class="img-fluid rounded shadow mb-3"
+                    alt="@Model.Whiskey.Name" />
             }
             else
             {
@@ -73,16 +74,21 @@
                         {
                             <tr>
                                 <td>
-                                    @if(bottle.Status == WhiskeyTracker.Web.Data.BottleStatus.Empty) {
-                                         <span class="badge bg-secondary">Empty</span>
-                                    } else if (bottle.Status == WhiskeyTracker.Web.Data.BottleStatus.Opened) {
-                                         <span class="badge bg-warning text-dark">Opened</span>
-                                    } else {
-                                         <span class="badge bg-success">Full</span>
+                                    @if (bottle.Status == WhiskeyTracker.Web.Data.BottleStatus.Empty)
+                                    {
+                                        <span class="badge bg-secondary">Empty</span>
+                                    }
+                                    else if (bottle.Status == WhiskeyTracker.Web.Data.BottleStatus.Opened)
+                                    {
+                                        <span class="badge bg-warning text-dark">Opened</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Full</span>
                                     }
                                 </td>
-                                <td>@(bottle.PurchaseDate.HasValue ? bottle.PurchaseDate.Value.ToShortDateString() : "-")</td>
-                                <td>@(bottle.PurchasePrice.HasValue ? bottle.PurchasePrice.Value.ToString("C") : "-")</td>
+                                <td>@(bottle.PurchaseDate.HasValue? bottle.PurchaseDate.Value.ToShortDateString() : "-")</td>
+                                <td>@(bottle.PurchasePrice.HasValue? bottle.PurchasePrice.Value.ToString("C") : "-")</td>
                                 <td>@bottle.PurchaseLocation</td>
                                 <td>
                                     <a asp-page="./EditBottle" asp-route-id="@bottle.Id" class="btn btn-sm btn-warning">Edit</a>
@@ -92,6 +98,49 @@
                     </tbody>
                 </table>
             }
+            <div class="mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded">
+                    <h3 class="h5 m-0">Tasting Journal</h3>
+                    <span class="badge bg-primary">
+                        @if (Model.Whiskey.TastingNotes.Any())
+                        {
+                            <span>Avg: @Model.Whiskey.TastingNotes.Average(n => n.Rating).ToString("0.0") ★</span>
+                        }
+                        else
+                        {
+                            <span>No Ratings Yet</span>
+                        }
+                    </span>
+                </div>
+
+                @if (Model.Whiskey.TastingNotes.Count == 0)
+                {
+                    <p class="text-muted fst-italic">You haven't tasted this whiskey in a session yet.</p>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var note in Model.Whiskey.TastingNotes.OrderByDescending(n => n.TastingSession.Date))
+                        {
+                            <div class="list-group-item px-0">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1 fw-bold">@note.TastingSession.Title</h6>
+                                    <small class="text-muted">@note.TastingSession.Date.ToShortDateString()</small>
+                                </div>
+                                <div class="mb-2">
+                                    <span class="text-warning">
+                                        @for (int i = 0; i < note.Rating; i++)
+                                        {
+                                            <span>★</span>
+                                        }
+                                    </span>
+                                </div>
+                                <p class="mb-1 text-muted">@note.Notes</p>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>

@@ -65,6 +65,9 @@ namespace WhiskeyTracker.Web.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("BottleId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Notes")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -83,6 +86,8 @@ namespace WhiskeyTracker.Web.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BottleId");
 
                     b.HasIndex("TastingSessionId");
 
@@ -167,6 +172,10 @@ namespace WhiskeyTracker.Web.Migrations
 
             modelBuilder.Entity("WhiskeyTracker.Web.Data.TastingNote", b =>
                 {
+                    b.HasOne("WhiskeyTracker.Web.Data.Bottle", "Bottle")
+                        .WithMany("TastingNotes")
+                        .HasForeignKey("BottleId");
+
                     b.HasOne("WhiskeyTracker.Web.Data.TastingSession", "TastingSession")
                         .WithMany("Notes")
                         .HasForeignKey("TastingSessionId")
@@ -174,14 +183,21 @@ namespace WhiskeyTracker.Web.Migrations
                         .IsRequired();
 
                     b.HasOne("WhiskeyTracker.Web.Data.Whiskey", "Whiskey")
-                        .WithMany()
+                        .WithMany("TastingNotes")
                         .HasForeignKey("WhiskeyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Bottle");
+
                     b.Navigation("TastingSession");
 
                     b.Navigation("Whiskey");
+                });
+
+            modelBuilder.Entity("WhiskeyTracker.Web.Data.Bottle", b =>
+                {
+                    b.Navigation("TastingNotes");
                 });
 
             modelBuilder.Entity("WhiskeyTracker.Web.Data.TastingSession", b =>
@@ -192,6 +208,8 @@ namespace WhiskeyTracker.Web.Migrations
             modelBuilder.Entity("WhiskeyTracker.Web.Data.Whiskey", b =>
                 {
                     b.Navigation("Bottles");
+
+                    b.Navigation("TastingNotes");
                 });
 #pragma warning restore 612, 618
         }

@@ -23,6 +23,8 @@ public class DetailsModel : PageModel
         // fetch the whiskey AND its bottles in one go
         var whiskey = await _context.Whiskies
             .Include(w => w.Bottles) // <--- Loads the inventory data
+            .Include(tn => tn.TastingNotes) // <--- Loads the tasting notes
+              .ThenInclude(ts => ts.TastingSession) // <--- Loads the tasting session for each note
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (whiskey == null) return NotFound();
