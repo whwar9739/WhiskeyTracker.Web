@@ -48,6 +48,7 @@ public class TastingTests
         Assert.Equal("Epic Night", savedSession.Title);
         
         // Verify the ID in the redirect matches the saved ID
-        Assert.Equal(savedSession.Id, redirect.RouteValues!["sessionId"]);
+        Assert.NotNull(redirect.RouteValues);
+        Assert.Equal(savedSession.Id, redirect.RouteValues["sessionId"]);
     }
 }
