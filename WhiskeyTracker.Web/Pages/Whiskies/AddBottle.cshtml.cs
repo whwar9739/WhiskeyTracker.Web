@@ -7,10 +7,12 @@ namespace WhiskeyTracker.Web.Pages.Whiskies;
 public class AddBottleModel : PageModel
 {
     private readonly AppDbContext _context;
+    private readonly TimeProvider _timeProvider;
 
-    public AddBottleModel(AppDbContext context)
+    public AddBottleModel(AppDbContext context, TimeProvider timeProvider)
     {
         _context = context;
+        _timeProvider = timeProvider;
     }
 
     [BindProperty]
@@ -24,11 +26,12 @@ public class AddBottleModel : PageModel
         if (whiskey == null) return NotFound();
 
         WhiskeyName = whiskey.Name;
+        var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().Date);
 
         NewBottle = new Bottle
         {
             WhiskeyId = id,
-            PurchaseDate = DateOnly.FromDateTime(DateTime.Today)
+            PurchaseDate = today
         };
 
         return Page();

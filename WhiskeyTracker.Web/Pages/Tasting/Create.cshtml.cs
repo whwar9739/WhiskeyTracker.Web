@@ -7,10 +7,12 @@ namespace WhiskeyTracker.Web.Pages.Tasting;
 public class CreateModel : PageModel
 {
     private readonly AppDbContext _context;
+    private readonly TimeProvider _timeProvider;
 
-    public CreateModel(AppDbContext context)
+    public CreateModel(AppDbContext context, TimeProvider timeProvider)
     {
         _context = context;
+        _timeProvider = timeProvider;
     }
 
     [BindProperty]
@@ -18,10 +20,11 @@ public class CreateModel : PageModel
 
     public void OnGet()
     {
+        var now = _timeProvider.GetLocalNow();
         Session = new TastingSession
         {
-            Date = DateOnly.FromDateTime(DateTime.Today),
-            Title = $"Tasting on {DateTime.Now:MMM dd, yyyy}"
+            Date = DateOnly.FromDateTime(now.Date),
+            Title = $"Tasting on {now:MMM dd, yyyy}"
         };
     }
 
