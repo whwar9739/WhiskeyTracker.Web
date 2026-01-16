@@ -74,7 +74,7 @@ public class WhiskiesTests
     public async Task Create_UploadsFile_AndRedirects()
     {
         using var context = GetInMemoryContext();
-        
+
         // Mock the Environment to use a temp folder
         var mockEnv = new Mock<IWebHostEnvironment>();
         mockEnv.Setup(m => m.WebRootPath).Returns(Path.GetTempPath());
@@ -139,5 +139,18 @@ public class WhiskiesTests
 
         Assert.IsType<RedirectToPageResult>(result);
         Assert.Empty(context.Whiskies);
+    }
+    [Fact]
+    public async Task Delete_ReturnsNotFound_WhenWhiskeyNotFound()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var pageModel = new DeleteModel(context);
+
+        // Act
+        var result = await pageModel.OnPostAsync(999); // A non-existent ID
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
     }
 }

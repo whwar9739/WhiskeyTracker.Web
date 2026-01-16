@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
-using Moq;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Pages.Whiskies;
-using Xunit;
 
 namespace WhiskeyTracker.Tests;
 
@@ -52,7 +49,7 @@ public class BottleTests
         await context.SaveChangesAsync();
 
         // Use FakeTimeProvider with any date, since this test doesn't check the date
-        var pageModel = new AddBottleModel(context, new FakeTimeProvider(DateTimeOffset.Now))
+        var pageModel = new AddBottleModel(context, new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)))
         {
             NewBottle = new Bottle { WhiskeyId = 1, PurchaseDate = null }
         };

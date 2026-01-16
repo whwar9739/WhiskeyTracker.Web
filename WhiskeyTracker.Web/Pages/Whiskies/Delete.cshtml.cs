@@ -37,7 +37,11 @@ public class DeleteModel : PageModel
 
         var whiskey = await _context.Whiskies.FindAsync(id);
 
-        if (whiskey != null)
+        if (whiskey == null)
+        {
+            return NotFound();
+        }
+        else
         {
             _context.Whiskies.Remove(whiskey);
             await _context.SaveChangesAsync();

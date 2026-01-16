@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Pages.Tasting;
-using Xunit;
 using Microsoft.EntityFrameworkCore;
-using Moq;
 
 namespace WhiskeyTracker.Tests;
 
@@ -45,7 +43,7 @@ public class TastingTests
         using var context = GetInMemoryContext();
 
         // Pass the fake provider to the constructor
-        var pageModel = new CreateModel(context, new FakeTimeProvider(DateTimeOffset.Now))
+        var pageModel = new CreateModel(context, new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)))
         {
             Session = new TastingSession { Title = "Epic Night" }
         };
@@ -57,6 +55,7 @@ public class TastingTests
 
         var savedSession = await context.TastingSessions.FirstAsync();
         Assert.Equal("Epic Night", savedSession.Title);
+        Assert.NotNull(redirect.RouteValues);
         Assert.Equal(savedSession.Id, redirect.RouteValues["sessionId"]);
     }
 }
