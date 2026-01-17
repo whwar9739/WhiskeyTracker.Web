@@ -75,6 +75,7 @@ Follow these instructions to get the project running on your local machine.
 * **Data Export:** Export collection to CSV/Excel.
 * **Global Ratings:** Refactor static whiskey ratings to be an average of all tasting session scores.
 * **Automated Unit Testing:** Add a test suite (xUnit or NUnit) to verify business logic and prevent regressions.
+* **CI/CD Pipeline:** Add the ability to automatically deploy after a merge in GIT
 
 ## 🤝 Contributing
 

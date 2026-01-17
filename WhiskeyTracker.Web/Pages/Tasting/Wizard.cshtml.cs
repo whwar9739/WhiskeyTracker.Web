@@ -57,6 +57,17 @@ public class WizardModel : PageModel
             {
                 NewNote.WhiskeyId = bottle.WhiskeyId;
                 NewNote.BottleId = bottle.Id;
+
+                if (NewNote.PourAmountMl > 0)
+                {
+                    bottle.CurrentVolumeMl -= NewNote.PourAmountMl;
+                    if (bottle.CurrentVolumeMl <= 0) bottle.CurrentVolumeMl = 0;
+                    if (bottle.CurrentVolumeMl == 0)
+                    {
+                        bottle.Status = BottleStatus.Empty;
+                        TempData["InfoMessage"] = "You killed the bottle! 💀 It has been marked as Finished.";
+                    }
+                }
             }
         }
         else if (SelectedWhiskeyId.HasValue)
@@ -110,19 +121,22 @@ public class WizardModel : PageModel
         {
             Session = session;
         }
-
-        // FIX: Initialize NewNote so it is not null
         NewNote = new TastingNote();
 
         var bottles = await _context.Bottles
             .Include(b => b.Whiskey)
             .Where(b => b.Status != BottleStatus.Empty)
-            .OrderBy(b => b.Whiskey.Name)
+            .OrderBy(b => b.Whiskey != null ? b.Whiskey.Name : string.Empty)
             .ToListAsync();
 
-        BottleOptions = new SelectList(bottles.Select(b => new {
+        BottleOptions = new SelectList(bottles.Select(b =>
+        {
+            var whiskeyName = b.Whiskey != null ? b.Whiskey.Name : "Unknown Bottle";
+
+            return new {
             b.Id,
-            Text = $"{b.Whiskey.Name} ({b.Status})"
+            Text = $"{whiskeyName} ({b.Status})"
+            };
         }), "Id", "Text");
 
         var whiskies = await _context.Whiskies

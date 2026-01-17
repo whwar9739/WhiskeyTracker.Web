@@ -15,8 +15,9 @@ public class Bottle
     public int Id { get; set; }
 
     // --- The Link to the Whiskey Definition ---
+    [Required]
     public int WhiskeyId { get; set; } // Foreign Key
-    public Whiskey Whiskey { get; set; } = null!; // Navigation Property
+    public Whiskey? Whiskey { get; set; } = null!; // Navigation Property
 
     // --- Inventory Details ---
     [DataType(DataType.Date)]
@@ -32,6 +33,11 @@ public class Bottle
     
     // Optional: You might want to track specific bottling dates for specific bottles
     public DateOnly? BottlingDate { get; set; } 
+
+    [Range(0, 5000)]
+    public int CapacityMl { get; set; } = 750; // Default to 750ml
+    public int CurrentVolumeMl { get; set; } = 750; // Default to full bottle
+    public bool IsInfinityBottle { get; set; } = false;
 
     public List<TastingNote> TastingNotes { get; set; } = new();
 }

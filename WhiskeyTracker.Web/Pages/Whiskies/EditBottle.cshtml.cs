@@ -30,7 +30,8 @@ public class EditBottleModel : PageModel
         if (bottle == null) return NotFound();
 
         Bottle = bottle;
-        WhiskeyName = bottle.Whiskey.Name;
+        if (bottle.Whiskey != null)
+            WhiskeyName = bottle.Whiskey.Name;
 
         return Page();
     }
@@ -47,7 +48,8 @@ public class EditBottleModel : PageModel
 
             if (bottleForName != null)
             {
-                WhiskeyName = bottleForName.Whiskey.Name;
+                if (bottleForName.Whiskey != null)
+                    WhiskeyName = bottleForName.Whiskey.Name;
             }
             
             return Page();
