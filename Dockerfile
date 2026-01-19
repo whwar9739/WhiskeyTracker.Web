@@ -30,9 +30,10 @@ RUN apt-get update \
 
 # Switch to non-root user for security
 USER app
-COPY --from=publish /app/publish .
+COPY --from=publish --chown=app:app /app/publish .
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:8080/health || exit 1
+
 
 ENTRYPOINT ["dotnet", "WhiskeyTracker.Web.dll"]
