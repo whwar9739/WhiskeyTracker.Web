@@ -1,0 +1,25 @@
+# Ignore Git history
+.git/
+.gitignore
+
+# Ignore Visual Studio / VS Code settings
+.vs/
+.vscode/
+*.user
+*.suo
+*.code-workspace
+
+# Ignore build output (important!)
+**/bin/
+**/obj/
+**/TestResults/
+
+# Ignore Docker files themselves
+Dockerfile
+.dockerignore
+
+# Ignore GitHub Actions workflows
+.github/
+
+# Ignore Documentation
+README.md
