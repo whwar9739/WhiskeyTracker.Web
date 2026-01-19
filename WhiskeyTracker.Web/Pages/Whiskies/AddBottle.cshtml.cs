@@ -26,12 +26,17 @@ public class AddBottleModel : PageModel
         if (whiskey == null) return NotFound();
 
         WhiskeyName = whiskey.Name;
-        var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().Date);
+        
+        // Use our Test-Friendly TimeProvider
+        var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
 
+        // Initialize Defaults
         NewBottle = new Bottle
         {
             WhiskeyId = id,
-            PurchaseDate = today
+            PurchaseDate = today,
+            CapacityMl = 750,      // Default standard bottle
+            CurrentVolumeMl = 750  // Default to full
         };
 
         return Page();
@@ -39,6 +44,7 @@ public class AddBottleModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // Remove Whiskey validation since we set the ID manually
         ModelState.Remove("NewBottle.Whiskey");
 
         if (!ModelState.IsValid)

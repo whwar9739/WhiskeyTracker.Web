@@ -1,51 +1,98 @@
 @page "{id:int}"
 @model WhiskeyTracker.Web.Pages.Whiskies.AddBottleModel
 @{
-    ViewData["Title"] = "Add to Inventory";
+    ViewData["Title"] = "Add Bottle";
 }
 
 <div class="container mt-4">
-    <h1>Add to Inventory</h1>
-    <h3>Adding a bottle of: <span class="text-primary">@Model.WhiskeyName</span></h3>
-    <hr />
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Add Bottle: @Model.WhiskeyName</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <input type="hidden" asp-for="NewBottle.WhiskeyId" />
 
-    <div class="row">
-        <div class="col-md-6">
-            <form method="post">
-                <div asp-validation-summary="All" class="text-danger mb-3"></div>
-                <input type="hidden" asp-for="NewBottle.WhiskeyId" />
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="NewBottle.PurchasePrice" class="form-label">Price Paid</label>
-                        <div class="input-group">
-                            <span class="input-group-text">$</span>
-                            <input asp-for="NewBottle.PurchasePrice" class="form-control" />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.PurchaseDate" class="control-label">Purchase Date</label>
+                                    <input asp-for="NewBottle.PurchaseDate" class="form-control" type="date" />
+                                    <span asp-validation-for="NewBottle.PurchaseDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.BottlingDate" class="control-label">Bottling Date (Optional)</label>
+                                    <input asp-for="NewBottle.BottlingDate" class="form-control" type="date" />
+                                    <span asp-validation-for="NewBottle.BottlingDate" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="NewBottle.PurchaseDate" class="form-label">Purchase Date</label>
-                        <input asp-for="NewBottle.PurchaseDate" type="date" class="form-control" />
-                    </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.PurchasePrice" class="control-label">Price ($)</label>
+                                    <input asp-for="NewBottle.PurchasePrice" class="form-control" />
+                                    <span asp-validation-for="NewBottle.PurchasePrice" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.PurchaseLocation" class="control-label">Purchase Location</label>
+                                    <input asp-for="NewBottle.PurchaseLocation" class="form-control" placeholder="e.g. Local Shop, Gift, etc." />
+                                    <span asp-validation-for="NewBottle.PurchaseLocation" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="NewBottle.Status" class="control-label">Bottle Status</label>
+                            <select asp-for="NewBottle.Status" class="form-select" asp-items="Html.GetEnumSelectList<WhiskeyTracker.Web.Data.BottleStatus>()"></select>
+                            <span asp-validation-for="NewBottle.Status" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.CapacityMl" class="control-label">Capacity (ml)</label>
+                                    <input asp-for="NewBottle.CapacityMl" class="form-control" />
+                                    <span asp-validation-for="NewBottle.CapacityMl" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.CurrentVolumeMl" class="control-label">Current (ml)</label>
+                                    <input asp-for="NewBottle.CurrentVolumeMl" class="form-control" />
+                                    <span asp-validation-for="NewBottle.CurrentVolumeMl" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3 pt-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" asp-for="NewBottle.IsInfinityBottle" />
+                                        <label class="form-check-label" asp-for="NewBottle.IsInfinityBottle">
+                                            Is this an Infinity Bottle? ♾️
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-success">Save Bottle</button>
+                            <a asp-page="./Details" asp-route-id="@Model.NewBottle.WhiskeyId" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
                 </div>
-                <div class="mb-3">
-                    <label asp-for="NewBottle.PurchaseLocation" class="form-label">Location (Store/City)</label>
-                    <input asp-for="NewBottle.PurchaseLocation" class="form-control" placeholder="e.g. Total Wine" />
-                </div>
-                <div class="mb-3">
-                    <label asp-for="NewBottle.Status" class="form-label">Bottle Status</label>
-                    <select asp-for="NewBottle.Status" class="form-select" asp-items="Html.GetEnumSelectList<WhiskeyTracker.Web.Data.BottleStatus>()"></select>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="NewBottle.BottlingDate" class="form-label">Bottling Date (Optional)</label>
-                    <input asp-for="NewBottle.BottlingDate" type="date" class="form-control" />
-                    <small class="text-muted">Useful for tracking specific batches.</small>
-                </div>
-                <div class="mt-4">
-                    <input type="submit" value="Add to Inventory" class="btn btn-success" />
-                    <a asp-page="./Details" asp-route-id="@Model.NewBottle.WhiskeyId" class="btn btn-secondary">Cancel</a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

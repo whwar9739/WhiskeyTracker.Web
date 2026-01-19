@@ -11,4 +11,5 @@ public class AppDbContext : DbContext
     public DbSet<Bottle> Bottles { get; set; }
     public DbSet<TastingSession> TastingSessions { get; set; }
     public DbSet<TastingNote> TastingNotes { get; set; }
+    public DbSet<BlendComponent> BlendComponents { get; set; }
 }

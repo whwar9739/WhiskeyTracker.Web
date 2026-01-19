@@ -15,10 +15,12 @@ public class TastingNote
     public int? BottleId { get; set; }
     public Bottle? Bottle { get; set; }
 
+    public int PourAmountMl { get; set; } = 60; // Default to ~2 oz
+
     public int OrderIndex { get; set; }
 
     [Range(1, 5)]
-    public int Rating { get; set; }
+    public int Rating { get; set; } 
 
     [MaxLength(2000)]
     public string? Notes { get; set; } = string.Empty;

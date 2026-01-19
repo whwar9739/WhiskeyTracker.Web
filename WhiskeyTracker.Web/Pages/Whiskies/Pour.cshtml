@@ -1,0 +1,59 @@
+@page "{id:int}"
+@model WhiskeyTracker.Web.Pages.Whiskies.PourModel
+@{
+    ViewData["Title"] = "Pour into Infinity";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">🥃 Add to Infinity Bottle</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Source: <strong>@Model.SourceBottle.Whiskey?.Name ?? "Unknown Whiskey"</strong></h5>
+                    <p class="text-muted">Current Level: @Model.SourceBottle.CurrentVolumeMl ml</p>
+                    <hr />
+
+                    <form method="post">
+                        <input type="hidden" asp-for="SourceBottle.Id" />
+
+                        @if (Model.InfinityBottles.Any())
+                        {
+                            <div class="form-group mb-3">
+                                <label asp-for="TargetInfinityBottleId" class="form-label fw-bold">Destination Bottle</label>
+                                <select asp-for="TargetInfinityBottleId" class="form-select" asp-items="Model.InfinityBottles"></select>
+                                <span asp-validation-for="TargetInfinityBottleId" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group mb-3">
+                                <label asp-for="PourAmountMl" class="form-label fw-bold">Amount to Pour (ml)</label>
+                                <input asp-for="PourAmountMl" class="form-control" type="number" min="1" max="300" />
+                                <span asp-validation-for="PourAmountMl" class="text-danger"></span>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">Confirm Pour</button>
+                                <a asp-page="./Details" asp-route-id="@Model.SourceBottle.WhiskeyId" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <strong>No Open Infinity Bottles Found!</strong>
+                                You need to create an Infinity Bottle (and mark it as 'Opened') before you can pour into it.
+                            </div>
+                            <a asp-page="/Whiskies/InfinityBottles/Create" class="btn btn-primary">Create Infinity Bottle</a>
+                            <a asp-page="./Details" asp-route-id="@Model.SourceBottle.WhiskeyId" class="btn btn-secondary ms-2">Back to Whiskey</a>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
