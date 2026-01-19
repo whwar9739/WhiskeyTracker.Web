@@ -10,6 +10,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddHealthChecks();
+
 builder.Services.AddSingleton(TimeProvider.System);
 
 var app = builder.Build();
@@ -27,6 +29,8 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.MapHealthChecks("/health");
 
 app.MapStaticAssets();
 app.MapRazorPages()

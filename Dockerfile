@@ -10,7 +10,6 @@ RUN dotnet restore "WhiskeyTracker.Web/WhiskeyTracker.Web.csproj"
 # Copy the rest of the code
 COPY . .
 WORKDIR "/src/WhiskeyTracker.Web"
-# REMOVED: redundant 'dotnet build' command
 
 # 2. Publish Stage
 # This handles building AND publishing the optimized files
@@ -24,8 +23,16 @@ WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Switch to non-root user for security
 USER app
-
 COPY --from=publish /app/publish .
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD curl --fail http://localhost:8080/health || exit 1
+
 ENTRYPOINT ["dotnet", "WhiskeyTracker.Web.dll"]
