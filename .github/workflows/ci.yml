@@ -14,28 +14,41 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # Add Postgres Service
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: whiskeypass
+          POSTGRES_DB: whiskey_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-    # 1. Check out the code from the repo
     - uses: actions/checkout@v4
-
-    # 2. Setup .NET 10 (Matches your project version)
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
-
-    # 3. Restore Dependencies (NuGet packages)
+        
     - name: Restore dependencies
-      run: dotnet restore WhiskeyTracker.sln
-
-    # 4. Build the Solution (Release Mode)
+      run: dotnet restore
+      
     - name: Build
-      run: dotnet build WhiskeyTracker.sln --no-restore --configuration Release
-
-    # 5. Run the Unit Tests 🧪
+      run: dotnet build --no-restore
+      
     - name: Test
-      run: dotnet test WhiskeyTracker.Tests/WhiskeyTracker.Tests.csproj --no-build --verbosity normal --configuration Release
+      run: dotnet test --no-build --verbosity normal
+      env:
+        # ENV 3 CONFIGURATION (CI/CD)
+        Database__Provider: Postgres
+        Database__ConnectionString: "Host=localhost;Database=whiskey_test_db;Username=postgres;Password=whiskeypass"
+        Database__SeedOnStartup: true
 
   build-and-push-image:
     needs: test
