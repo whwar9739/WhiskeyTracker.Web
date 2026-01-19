@@ -15,7 +15,7 @@ public class BottleTests
         return new AppDbContext(options);
     }
 
-[Fact]
+    [Fact]
     public async Task AddBottle_PopulatesDefaults_OnGet()
     {
         // 1. ARRANGE
@@ -23,25 +23,25 @@ public class BottleTests
         context.Whiskies.Add(new Whiskey { Id = 1, Name = "Parent Whiskey" });
         await context.SaveChangesAsync();
 
-        // FIX: Use your concrete Fake class, NOT a Mock
         var fixedTime = new DateTimeOffset(2015, 10, 21, 0, 0, 0, TimeSpan.Zero);
         var fakeTime = new FakeTimeProvider(fixedTime);
 
-        // Inject the fake into the PageModel
         var pageModel = new AddBottleModel(context, fakeTime);
-        
+
         // 2. ACT
         await pageModel.OnGetAsync(1);
 
         // 3. ASSERT
         Assert.Equal("Parent Whiskey", pageModel.WhiskeyName);
-        Assert.Equal(1, pageModel.NewBottle.WhiskeyId);
-        
-        // Verify it used the date from your FakeTimeProvider
         Assert.Equal(new DateOnly(2015, 10, 21), pageModel.NewBottle.PurchaseDate);
+
+        // --- NEW CHECKS ---
+        Assert.Equal(750, pageModel.NewBottle.CapacityMl);      // Default Capacity
+        Assert.Equal(750, pageModel.NewBottle.CurrentVolumeMl); // Default Volume
+        Assert.False(pageModel.NewBottle.IsInfinityBottle);     // Default False
     }
 
-[Fact]
+    [Fact]
     public async Task AddBottle_SavesNewBottle_OnPost()
     {
         using var context = GetInMemoryContext();

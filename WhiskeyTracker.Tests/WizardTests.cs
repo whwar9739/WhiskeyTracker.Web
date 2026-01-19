@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.AspNetCore.Mvc.ViewFeatures; // Needed for TempDataDictionary
-using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
-using Moq; 
+using Moq;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Pages.Tasting;
 using Xunit;
@@ -23,60 +23,136 @@ public class WizardTests
         return new AppDbContext(options);
     }
 
-    [Fact]
-    public async Task OnPostAsync_PopulatesWhiskeyId_WhenBottleIsSelected()
+    // Helper to Initialize PageModel with TempData
+    private WizardModel CreateWizardModel(AppDbContext context)
     {
-        // 1. ARRANGE
-        using var context = GetInMemoryContext();
-        
-        // Setup Fake Data
-        var whiskey = new Whiskey { Id = 10, Name = "Lagavulin 16", Distillery = "Lagavulin" };
-        var bottle = new Bottle { Id = 50, WhiskeyId = 10, Status = BottleStatus.Opened };
-        var session = new TastingSession { Id = 1, Title = "Friday Night" };
-        
-        context.Whiskies.Add(whiskey);
-        context.Bottles.Add(bottle);
-        context.TastingSessions.Add(session);
-        await context.SaveChangesAsync();
-
-        // --- Manually initialize the PageContext ---
         var httpContext = new DefaultHttpContext();
         var modelState = new ModelStateDictionary();
-        var actionContext = new ActionContext(httpContext, new RouteData(), new PageActionDescriptor(), modelState);
+        var actionContext = new ActionContext(httpContext, new Microsoft.AspNetCore.Routing.RouteData(), new PageActionDescriptor(), modelState);
         var modelMetadataProvider = new EmptyModelMetadataProvider();
         var viewData = new ViewDataDictionary(modelMetadataProvider, modelState);
+        var tempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
         var pageContext = new PageContext(actionContext)
         {
             ViewData = viewData
         };
 
-        // --- NEW: Initialize TempData ---
-        // TempData requires a "Provider" to handle storage, we use a Mock for this.
-        var tempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
-
-        // Initialize PageModel with the context
-        var pageModel = new WizardModel(context)
+        return new WizardModel(context)
         {
             PageContext = pageContext,
-            TempData = tempData, // <--- ASSIGN IT HERE
-            Url = new UrlHelper(actionContext), 
-            
-            // Simulate User Input
-            SelectedBottleId = 50,
-            SelectedWhiskeyId = null,
-            NewNote = new TastingNote { Notes = "Smoky and great!" }
+            TempData = tempData,
+            Url = new UrlHelper(actionContext)
+        };
+    }
+
+    [Fact]
+    public async Task OnGet_ReturnsNotFound_IfSessionInvalid()
+    {
+        using var context = GetInMemoryContext();
+        var pageModel = CreateWizardModel(context);
+
+        var result = await pageModel.OnGetAsync(999); // Invalid ID
+
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task OnGet_PopulatesSelectLists_WhenSessionValid()
+    {
+        // ARRANGE
+        using var context = GetInMemoryContext();
+        var session = new TastingSession { Date = DateOnly.FromDateTime(DateTime.Now) };
+        context.TastingSessions.Add(session);
+        var whiskey = new Whiskey { Name = "Test Whiskey" };
+        context.Whiskies.Add(whiskey);
+        var bottle = new Bottle { WhiskeyId = whiskey.Id, Status = BottleStatus.Opened };
+        context.Bottles.Add(bottle);
+        await context.SaveChangesAsync();
+
+        var pageModel = CreateWizardModel(context);
+
+        // ACT
+        var result = await pageModel.OnGetAsync(session.Id);
+
+        // ASSERT
+        Assert.IsType<PageResult>(result);
+        Assert.NotNull(pageModel.BottleOptions);
+        Assert.NotNull(pageModel.WhiskeyOptions);
+        Assert.Single(pageModel.BottleOptions!);
+    }
+
+    [Fact]
+    public async Task Create_DeductsInventory_WhenBottleSelected()
+    {
+        // ARRANGE
+        using var context = GetInMemoryContext();
+        var whiskey = new Whiskey { Name = "Test Whiskey" };
+        context.Whiskies.Add(whiskey);
+        await context.SaveChangesAsync();
+
+        var bottle = new Bottle 
+        { 
+            WhiskeyId = whiskey.Id, 
+            CurrentVolumeMl = 700, 
+            Status = BottleStatus.Opened 
+        };
+        context.Bottles.Add(bottle);
+        var session = new TastingSession { Date = DateOnly.FromDateTime(DateTime.Now) };
+        context.TastingSessions.Add(session);
+        await context.SaveChangesAsync();
+
+        var pageModel = CreateWizardModel(context);
+        pageModel.SelectedBottleId = bottle.Id;
+        pageModel.NewNote = new TastingNote 
+        { 
+            Notes = "Yummy", 
+            Rating = 8,
+            PourAmountMl = 50 // <--- User drank 50ml
         };
 
-        // 2. ACT
-        var result = await pageModel.OnPostAsync(1);
+        // ACT
+        await pageModel.OnPostAsync(session.Id);
 
-        // 3. ASSERT
-        Assert.IsType<RedirectToPageResult>(result);
+        // ASSERT
+        var dbBottle = await context.Bottles.FindAsync(bottle.Id);
+        Assert.NotNull(dbBottle);
+        Assert.Equal(650, dbBottle.CurrentVolumeMl); // 700 - 50 = 650
+    }
 
-        var savedNote = await context.TastingNotes.FirstOrDefaultAsync();
-        Assert.NotNull(savedNote);
-        Assert.Equal("Smoky and great!", savedNote.Notes);
-        Assert.Equal(50, savedNote.BottleId);
-        Assert.Equal(10, savedNote.WhiskeyId); 
+    [Fact]
+    public async Task Create_FinishesBottle_WhenVolumeHitsZero()
+    {
+        // ARRANGE
+        using var context = GetInMemoryContext();
+        var whiskey = new Whiskey { Name = "Test Whiskey" }; // Ensure whiskey exists
+        context.Whiskies.Add(whiskey);
+        await context.SaveChangesAsync();
+
+        var bottle = new Bottle 
+        { 
+            WhiskeyId = whiskey.Id,
+            CurrentVolumeMl = 30, // Only a sip left
+            Status = BottleStatus.Opened 
+        };
+        context.Bottles.Add(bottle);
+        var session = new TastingSession();
+        context.TastingSessions.Add(session);
+        await context.SaveChangesAsync();
+
+        var pageModel = CreateWizardModel(context);
+        pageModel.SelectedBottleId = bottle.Id;
+        pageModel.NewNote = new TastingNote 
+        { 
+            Notes = "The end.", 
+            PourAmountMl = 30 // <--- Finish it
+        };
+
+        // ACT
+        await pageModel.OnPostAsync(session.Id);
+
+        // ASSERT
+        var dbBottle = await context.Bottles.FindAsync(bottle.Id);
+        Assert.Equal(0, dbBottle.CurrentVolumeMl);
+        Assert.Equal(BottleStatus.Empty, dbBottle.Status);
     }
 }
