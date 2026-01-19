@@ -86,6 +86,6 @@ public class PourModel : PageModel
         };
         _context.BlendComponents.Add(blendLog);
         await _context.SaveChangesAsync();
-        return RedirectToPage("/Whiskies/Details", new { id = target.Id });
+        return RedirectToPage("/Whiskies/Details", new { id = source.WhiskeyId });
     }
 }
