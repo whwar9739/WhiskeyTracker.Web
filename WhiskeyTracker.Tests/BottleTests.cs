@@ -34,6 +34,7 @@ public class BottleTests
         // 3. ASSERT
         Assert.Equal("Parent Whiskey", pageModel.WhiskeyName);
         Assert.Equal(new DateOnly(2015, 10, 21), pageModel.NewBottle.PurchaseDate);
+        Assert.Equal(1, pageModel.NewBottle.WhiskeyId);
 
         // --- NEW CHECKS ---
         Assert.Equal(750, pageModel.NewBottle.CapacityMl);      // Default Capacity

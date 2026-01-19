@@ -15,16 +15,44 @@
                     <form method="post">
                         <input type="hidden" asp-for="NewBottle.WhiskeyId" />
 
-                        <div class="form-group mb-3">
-                            <label asp-for="NewBottle.PurchaseDate" class="control-label">Purchase Date</label>
-                            <input asp-for="NewBottle.PurchaseDate" class="form-control" type="date" />
-                            <span asp-validation-for="NewBottle.PurchaseDate" class="text-danger"></span>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.PurchaseDate" class="control-label">Purchase Date</label>
+                                    <input asp-for="NewBottle.PurchaseDate" class="form-control" type="date" />
+                                    <span asp-validation-for="NewBottle.PurchaseDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.BottlingDate" class="control-label">Bottling Date (Optional)</label>
+                                    <input asp-for="NewBottle.BottlingDate" class="form-control" type="date" />
+                                    <span asp-validation-for="NewBottle.BottlingDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.PurchasePrice" class="control-label">Price ($)</label>
+                                    <input asp-for="NewBottle.PurchasePrice" class="form-control" />
+                                    <span asp-validation-for="NewBottle.PurchasePrice" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="NewBottle.PurchaseLocation" class="control-label">Purchase Location</label>
+                                    <input asp-for="NewBottle.PurchaseLocation" class="form-control" placeholder="e.g. Local Shop, Gift, etc." />
+                                    <span asp-validation-for="NewBottle.PurchaseLocation" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group mb-3">
-                            <label asp-for="NewBottle.PurchasePrice" class="control-label">Price ($)</label>
-                            <input asp-for="NewBottle.PurchasePrice" class="form-control" />
-                            <span asp-validation-for="NewBottle.PurchasePrice" class="text-danger"></span>
+                            <label asp-for="NewBottle.Status" class="control-label">Bottle Status</label>
+                            <select asp-for="NewBottle.Status" class="form-select" asp-items="Html.GetEnumSelectList<WhiskeyTracker.Web.Data.BottleStatus>()"></select>
+                            <span asp-validation-for="NewBottle.Status" class="text-danger"></span>
                         </div>
 
                         <div class="row">

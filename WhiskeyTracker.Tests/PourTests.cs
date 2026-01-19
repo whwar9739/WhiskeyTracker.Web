@@ -50,7 +50,7 @@ public class PourTests
 
         // Check the dropdown list - Should only have the ONE open infinity bottle
         var options = Assert.IsType<SelectList>(pageModel.InfinityBottles);
-        Assert.Equal(2, options.Count());
+        Assert.Equal(1, options.Count());
     }
 
     [Fact]

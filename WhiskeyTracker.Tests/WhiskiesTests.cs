@@ -108,9 +108,9 @@ public class WhiskiesTests
         using var context = GetInMemoryContext();
         var mockEnv = new Mock<IWebHostEnvironment>();
         var pageModel = new CreateModel(context, mockEnv.Object);
-        
+
         pageModel.OnGet(); // OnGet for CreateModel returns void
-        
+
         // No direct assertion on result type needed as OnGet returns void
     }
 
@@ -155,416 +155,250 @@ public class WhiskiesTests
         Assert.Equal("Test", pageModel.Whiskey.Name);
     }
 
-        // --- DELETE TESTS ---
-
-        [Fact]
-        public async Task Delete_OnGet_ReturnsNotFound_ForNullId()
-        {
-            using var context = GetInMemoryContext();
-            var pageModel = new DeleteModel(context);
-            var result = await pageModel.OnGetAsync(null);
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-        [Fact]
-        public async Task Delete_OnGet_ReturnsNotFound_ForMissingWhiskey()
-        {
-            using var context = GetInMemoryContext();
-            var pageModel = new DeleteModel(context);
-            var result = await pageModel.OnGetAsync(999);
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-        [Fact]
-        public async Task Delete_OnGet_ReturnsPage_WithWhiskey()
-        {
-            using var context = GetInMemoryContext();
-            context.Whiskies.Add(new Whiskey { Id = 1, Name = "To Delete" });
-            await context.SaveChangesAsync();
-
-            var pageModel = new DeleteModel(context);
-            var result = await pageModel.OnGetAsync(1);
-
-            Assert.IsType<PageResult>(result);
-            Assert.NotNull(pageModel.Whiskey);
-        }
-
-        [Fact]
-
-        public async Task Delete_RemovesWhiskey_WhenFound()
-
-        {
-
-            using var context = GetInMemoryContext();
-
-            context.Whiskies.Add(new Whiskey { Id = 1, Name = "To Delete" });
-
-            await context.SaveChangesAsync();
-
-    
-
-            var pageModel = new DeleteModel(context);
-
-            var result = await pageModel.OnPostAsync(1);
-
-    
-
-            Assert.IsType<RedirectToPageResult>(result);
-
-            Assert.Empty(context.Whiskies);
-
-        }
-
-        [Fact]
-
-        public async Task Delete_ReturnsNotFound_WhenWhiskeyNotFound()
-
-        {
-
-            // Arrange
-
-            using var context = GetInMemoryContext();
-
-            var pageModel = new DeleteModel(context);
-
-    
-
-            // Act
-
-            var result = await pageModel.OnPostAsync(999); // A non-existent ID
-
-    
-
-            // Assert
-
-            Assert.IsType<NotFoundResult>(result);
-
-        }
-
-        [Fact]
-        public async Task Delete_OnPost_ReturnsNotFound_ForNullId()
-        {
-            using var context = GetInMemoryContext();
-            var pageModel = new DeleteModel(context);
-            var result = await pageModel.OnPostAsync(null);
-            Assert.IsType<NotFoundResult>(result);
-        }
-
-    
-
-        // --- EDIT TESTS ---
-
-        [Fact]
-
-        public async Task Edit_OnGet_ReturnsNotFound_ForNullId()
-
-        {
-
-            // Arrange
-
-            using var context = GetInMemoryContext();
-
-            var mockEnv = new Mock<IWebHostEnvironment>();
-
-            var pageModel = new EditModel(context, mockEnv.Object);
-
-    
-
-            // Act
-
-            var result = await pageModel.OnGetAsync(null);
-
-    
-
-            // Assert
-
-            Assert.IsType<NotFoundResult>(result);
-
-        }
-
-        [Fact]
-        public async Task Edit_OnPost_ReturnsPage_WhenModelStateInvalid()
-        {
-            using var context = GetInMemoryContext();
-            context.Whiskies.Add(new Whiskey { Id = 1, Name = "Original" });
-            await context.SaveChangesAsync();
-            context.ChangeTracker.Clear();
-
-            var mockEnv = new Mock<IWebHostEnvironment>();
-            var pageModel = new EditModel(context, mockEnv.Object)
-            {
-                Whiskey = new Whiskey { Id = 1, Name = "Updated" }
-            };
-            pageModel.ModelState.AddModelError("Error", "Sample Error");
-
-            var result = await pageModel.OnPostAsync();
-
-            Assert.IsType<PageResult>(result);
-            var whiskey = await context.Whiskies.FindAsync(1);
-            Assert.NotNull(whiskey);
-            Assert.Equal("Original", whiskey.Name);
-        }
-
-    
-
-        [Fact]
-
-        public async Task Edit_OnGet_ReturnsNotFound_ForMissingWhiskey()
-
-        {
-
-            // Arrange
-
-            using var context = GetInMemoryContext();
-
-            var mockEnv = new Mock<IWebHostEnvironment>();
-
-            var pageModel = new EditModel(context, mockEnv.Object);
-
-    
-
-            // Act
-
-            var result = await pageModel.OnGetAsync(123); // Non-existent ID
-
-    
-
-            // Assert
-
-            Assert.IsType<NotFoundResult>(result);
-
-        }
-
-    
-
-        [Fact]
-
-        public async Task Edit_OnGet_ReturnsPage_WithWhiskey()
-
-        {
-
-            // Arrange
-
-            using var context = GetInMemoryContext();
-
-            context.Whiskies.Add(new Whiskey { Id = 1, Name = "Test" });
-
-            await context.SaveChangesAsync();
-
-            var mockEnv = new Mock<IWebHostEnvironment>();
-
-            var pageModel = new EditModel(context, mockEnv.Object);
-
-    
-
-            // Act
-
-            var result = await pageModel.OnGetAsync(1);
-
-    
-
-            // Assert
-
-            Assert.IsType<PageResult>(result);
-
-            Assert.NotNull(pageModel.Whiskey);
-            Assert.NotNull(pageModel.Whiskey);
-
-            Assert.Equal(1, pageModel.Whiskey.Id);
-
-        }
-
-    
-
-        [Fact]
-
-        public async Task Edit_OnPost_UpdatesWhiskey()
-
-        {
-
-            // Arrange
-
-            using var context = GetInMemoryContext();
-
-            var originalWhiskey = new Whiskey { Id = 1, Name = "Original Name" };
-
-            context.Whiskies.Add(originalWhiskey);
-
-            await context.SaveChangesAsync();
-
-            context.ChangeTracker.Clear();
-
-    
-
-            var mockEnv = new Mock<IWebHostEnvironment>();
-
-            var pageModel = new EditModel(context, mockEnv.Object)
-
-            {
-
-                Whiskey = new Whiskey { Id = 1, Name = "Updated Name" }
-
-            };
-
-    
-
-            // Act
-
-            var result = await pageModel.OnPostAsync();
-
-    
-
-            // Assert
-
-            Assert.IsType<RedirectToPageResult>(result);
-
-            var updatedWhiskey = await context.Whiskies.FindAsync(1);
-
-            Assert.Equal("Updated Name", updatedWhiskey.Name);
-
-        }
-
-    
-
-        [Fact]
-
-        public async Task Edit_OnPost_HandlesConcurrencyError()
-
-        {
-
-            // Arrange
-
-            using var context = GetInMemoryContext();
-
-            var mockEnv = new Mock<IWebHostEnvironment>();
-
-            var pageModel = new EditModel(context, mockEnv.Object)
-
-            {
-
-                Whiskey = new Whiskey { Id = 1, Name = "No Whiskey For You" } // This whiskey doesn't exist
-
-            };
-
-    
-
-            // Act
-
-            var result = await pageModel.OnPostAsync();
-
-    
-
-            // Assert
-
-            Assert.IsType<NotFoundResult>(result);
-
-        }
-
-    
-
-        [Fact]
-
-        public async Task Edit_OnPost_HandlesFileUpload()
-
-        {
-
-            // Arrange
-
-            using var context = GetInMemoryContext();
-
-            var tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            var imagesPath = Path.Combine(tempPath, "images");
-            Directory.CreateDirectory(imagesPath);
-
-            var oldFileName = "old_image.jpg";
-            var oldFilePath = Path.Combine(imagesPath, oldFileName);
-
-            File.WriteAllText(oldFilePath, "old image content");
-
-    
-
-            context.Whiskies.Add(new Whiskey { Id = 1, Name = "Test", ImageFileName = oldFileName });
-
-            await context.SaveChangesAsync();
-
-    
-
-            var mockEnv = new Mock<IWebHostEnvironment>();
-
-            mockEnv.Setup(m => m.WebRootPath).Returns(tempPath);
-
-    
-
-            var mockFile = new Mock<IFormFile>();
-
-            var newFileName = "new_image.jpg";
-
-            mockFile.Setup(f => f.FileName).Returns(newFileName);
-
-            mockFile.Setup(f => f.Length).Returns(1024);
-
-            mockFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
-
-                .Returns((Stream stream, CancellationToken token) =>
-
-                {
-
-                    using (var writer = new StreamWriter(stream))
-
-                    {
-
-                        writer.Write("new image content");
-
-                    }
-
-                    return Task.CompletedTask;
-
-                });
-
-    
-
-            var pageModel = new EditModel(context, mockEnv.Object)
-
-            {
-
-                Whiskey = await context.Whiskies.FindAsync(1),
-
-                ImageUpload = mockFile.Object
-
-            };
-
-    
-
-            // Act
-
-            var result = await pageModel.OnPostAsync();
-
-    
-
-            // Assert
-
-            Assert.IsType<RedirectToPageResult>(result);
-
-            var updatedWhiskey = await context.Whiskies.FindAsync(1);
-            Assert.NotNull(updatedWhiskey);
-            Assert.NotNull(updatedWhiskey.ImageFileName);
-
-            Assert.NotEqual(oldFileName, updatedWhiskey.ImageFileName);
-
-            Assert.Contains(newFileName, updatedWhiskey.ImageFileName);
-
-            Assert.False(File.Exists(oldFilePath));
-
-            Assert.True(File.Exists(Path.Combine(tempPath, "images", updatedWhiskey.ImageFileName)));
-
-    
-
-            // Clean up
-
-            Directory.Delete(tempPath, true);
-
-        }
+    // --- DELETE TESTS ---
+
+    [Fact]
+    public async Task Delete_OnGet_ReturnsNotFound_ForNullId()
+    {
+        using var context = GetInMemoryContext();
+        var pageModel = new DeleteModel(context);
+        var result = await pageModel.OnGetAsync(null);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Delete_OnGet_ReturnsNotFound_ForMissingWhiskey()
+    {
+        using var context = GetInMemoryContext();
+        var pageModel = new DeleteModel(context);
+        var result = await pageModel.OnGetAsync(999);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Delete_OnGet_ReturnsPage_WithWhiskey()
+    {
+        using var context = GetInMemoryContext();
+        context.Whiskies.Add(new Whiskey { Id = 1, Name = "To Delete" });
+        await context.SaveChangesAsync();
+
+        var pageModel = new DeleteModel(context);
+        var result = await pageModel.OnGetAsync(1);
+
+        Assert.IsType<PageResult>(result);
+        Assert.NotNull(pageModel.Whiskey);
+    }
+
+    [Fact]
+
+    public async Task Delete_RemovesWhiskey_WhenFound()
+    {
+        using var context = GetInMemoryContext();
+        context.Whiskies.Add(new Whiskey { Id = 1, Name = "To Delete" });
+        await context.SaveChangesAsync();
+
+        var pageModel = new DeleteModel(context);
+        var result = await pageModel.OnPostAsync(1);
+
+        Assert.IsType<RedirectToPageResult>(result);
+        Assert.Empty(context.Whiskies);
+    }
+
+    [Fact]
+
+    public async Task Delete_ReturnsNotFound_WhenWhiskeyNotFound()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var pageModel = new DeleteModel(context);
+
+        // Act
+        var result = await pageModel.OnPostAsync(999); // A non-existent ID
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
 
     }
 
-    
+    [Fact]
+    public async Task Delete_OnPost_ReturnsNotFound_ForNullId()
+    {
+        using var context = GetInMemoryContext();
+        var pageModel = new DeleteModel(context);
+        var result = await pageModel.OnPostAsync(null);
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    // --- EDIT TESTS ---
+    [Fact]
+    public async Task Edit_OnGet_ReturnsNotFound_ForNullId()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        var pageModel = new EditModel(context, mockEnv.Object);
+
+        // Act
+        var result = await pageModel.OnGetAsync(null);
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+
+    }
+
+    [Fact]
+    public async Task Edit_OnPost_ReturnsPage_WhenModelStateInvalid()
+    {
+        using var context = GetInMemoryContext();
+        context.Whiskies.Add(new Whiskey { Id = 1, Name = "Original" });
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        var pageModel = new EditModel(context, mockEnv.Object)
+        {
+            Whiskey = new Whiskey { Id = 1, Name = "Updated" }
+        };
+        pageModel.ModelState.AddModelError("Error", "Sample Error");
+
+        var result = await pageModel.OnPostAsync();
+
+        Assert.IsType<PageResult>(result);
+        var whiskey = await context.Whiskies.FindAsync(1);
+        Assert.NotNull(whiskey);
+        Assert.Equal("Original", whiskey.Name);
+    }
+
+    [Fact]
+    public async Task Edit_OnGet_ReturnsNotFound_ForMissingWhiskey()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        var pageModel = new EditModel(context, mockEnv.Object);
+
+        // Act
+        var result = await pageModel.OnGetAsync(123); // Non-existent ID
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Edit_OnGet_ReturnsPage_WithWhiskey()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        context.Whiskies.Add(new Whiskey { Id = 1, Name = "Test" });
+        await context.SaveChangesAsync();
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        var pageModel = new EditModel(context, mockEnv.Object);
+
+        // Act
+        var result = await pageModel.OnGetAsync(1);
+
+        // Assert
+        Assert.IsType<PageResult>(result);
+        Assert.NotNull(pageModel.Whiskey);
+        Assert.NotNull(pageModel.Whiskey);
+        Assert.Equal(1, pageModel.Whiskey.Id);
+    }
+
+    [Fact]
+    public async Task Edit_OnPost_UpdatesWhiskey()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var originalWhiskey = new Whiskey { Id = 1, Name = "Original Name" };
+        context.Whiskies.Add(originalWhiskey);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        var pageModel = new EditModel(context, mockEnv.Object)
+        {
+            Whiskey = new Whiskey { Id = 1, Name = "Updated Name" }
+        };
+
+        // Act
+        var result = await pageModel.OnPostAsync();
+
+        // Assert
+        Assert.IsType<RedirectToPageResult>(result);
+        var updatedWhiskey = await context.Whiskies.FindAsync(1);
+        Assert.Equal("Updated Name", updatedWhiskey.Name);
+    }
+
+    [Fact]
+    public async Task Edit_OnPost_HandlesConcurrencyError()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        var pageModel = new EditModel(context, mockEnv.Object)
+        {
+            Whiskey = new Whiskey { Id = 1, Name = "No Whiskey For You" } // This whiskey doesn't exist
+        };
+
+        // Act
+        var result = await pageModel.OnPostAsync();
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Edit_OnPost_HandlesFileUpload()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var imagesPath = Path.Combine(tempPath, "images");
+        Directory.CreateDirectory(imagesPath);
+        var oldFileName = "old_image.jpg";
+        var oldFilePath = Path.Combine(imagesPath, oldFileName);
+        File.WriteAllText(oldFilePath, "old image content");
+
+        context.Whiskies.Add(new Whiskey { Id = 1, Name = "Test", ImageFileName = oldFileName });
+        await context.SaveChangesAsync();
+
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        mockEnv.Setup(m => m.WebRootPath).Returns(tempPath);
+
+        var mockFile = new Mock<IFormFile>();
+        var newFileName = "new_image.jpg";
+        mockFile.Setup(f => f.FileName).Returns(newFileName);
+        mockFile.Setup(f => f.Length).Returns(1024);
+        mockFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+            .Returns((Stream stream, CancellationToken token) =>
+            {
+                using (var writer = new StreamWriter(stream))
+                {
+                    writer.Write("new image content");
+                }
+                return Task.CompletedTask;
+            });
+
+        var pageModel = new EditModel(context, mockEnv.Object)
+        {
+            Whiskey = await context.Whiskies.FindAsync(1),
+            ImageUpload = mockFile.Object
+        };
+
+        // Act
+        var result = await pageModel.OnPostAsync();
+
+        // Assert
+        Assert.IsType<RedirectToPageResult>(result);
+        var updatedWhiskey = await context.Whiskies.FindAsync(1);
+        Assert.NotNull(updatedWhiskey);
+        Assert.NotNull(updatedWhiskey.ImageFileName);
+        Assert.NotEqual(oldFileName, updatedWhiskey.ImageFileName);
+        Assert.Contains(newFileName, updatedWhiskey.ImageFileName);
+        Assert.False(File.Exists(oldFilePath));
+        Assert.True(File.Exists(Path.Combine(tempPath, "images", updatedWhiskey.ImageFileName)));
+
+        // Clean up
+        Directory.Delete(tempPath, true);
+    }
+}

@@ -49,7 +49,7 @@ public class PourModel : PageModel
 
         var infinityBottles = await _context.Bottles
             .Include(b => b.Whiskey)
-            .Where(b => b.IsInfinityBottle && b.Id != bottle.Id)
+            .Where(b => b.IsInfinityBottle && b.Id != bottle.Id && b.Status != BottleStatus.Full)
             .ToListAsync();
 
         InfinityBottles = new SelectList(infinityBottles, "Id", "Whiskey.Name");
