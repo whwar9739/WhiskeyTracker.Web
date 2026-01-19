@@ -18,6 +18,9 @@ public class Whiskey
     [MaxLength(60)]
     public string Region { get; set; } = string.Empty; // e.g., "Speyside"
 
+    [MaxLength(60)]
+    public string Type { get; set; } = string.Empty; // e.g., "Single Malt", "Bourbon"
+
     [Display(Name = "Age (Years)")]
     public int? Age { get; set; }
 

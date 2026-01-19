@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whiskey-web
+  labels:
+    app: whiskey-tracker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whiskey-tracker
+  template:
+    metadata:
+      labels:
+        app: whiskey-tracker
+    spec:
+      containers:
+        - name: whiskey-web
+          # REPLACE WITH YOUR ACTUAL IMAGE PATH
+          image: ghcr.io/whwar9739/whiskeytracker.web:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: Database__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: whiskey-secrets
+                  key: connection-string
+      imagePullSecrets:
+        - name: ghcr-secret
