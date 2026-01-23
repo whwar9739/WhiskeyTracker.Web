@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - storage.yaml
   - app-service.yaml
+  - app-deployment.yaml
   - ingress.yaml
   # Add deployment.yaml if it exists, otherwise the user needs to ensure it's included. 
   # Assuming deployment is handled separately or missing from recent file lists, 
