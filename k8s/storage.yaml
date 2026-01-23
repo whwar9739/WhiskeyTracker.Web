@@ -4,6 +4,7 @@ kind: PersistentVolume
 metadata:
   name: whiskey-db-pv
 spec:
+  storageClassName: ""
   capacity:
     storage: 10Gi
   accessModes:
@@ -17,6 +18,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: whiskey-db-pvc
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteOnce
   resources:
@@ -30,6 +32,7 @@ kind: PersistentVolume
 metadata:
   name: whiskey-photos-pv
 spec:
+  storageClassName: ""
   capacity:
     storage: 10Gi
   accessModes:
@@ -43,6 +46,7 @@ kind: PersistentVolumeClaim
 metadata:
   name: whiskey-photos-pvc
 spec:
+  storageClassName: ""
   accessModes:
     - ReadWriteMany
   resources:
