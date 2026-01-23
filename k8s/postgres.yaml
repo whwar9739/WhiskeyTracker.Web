@@ -31,7 +31,7 @@ spec:
               - pg_isready
               - -d
               - whiskey_prod
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 5
           resources:
             requests:
@@ -66,4 +66,5 @@ spec:
   selector:
     app: postgres
   ports:
+
     - port: 5432
