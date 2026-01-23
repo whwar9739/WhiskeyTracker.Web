@@ -20,9 +20,11 @@ spec:
           livenessProbe:
             exec:
               command:
-              - pg_isready
-              - -d
-              - whiskey_prod
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - whiskey_prod
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
@@ -68,3 +70,4 @@ spec:
   ports:
 
     - port: 5432
+
