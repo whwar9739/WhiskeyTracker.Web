@@ -4,7 +4,7 @@ metadata:
   name: whiskey-db-pv
 spec:
   nfs:
-    server: 192.168.8.1
+    server: pinas
     path: /export/whiskey-db
 ---
 apiVersion: v1
@@ -13,5 +13,5 @@ metadata:
   name: whiskey-photos-pv
 spec:
   nfs:
-    server: 192.168.8.1
+    server: pinas
     path: /export/whiskey-photos
