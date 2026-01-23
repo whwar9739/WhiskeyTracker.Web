@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whiskey-ingress
+spec:
+  rules:
+  - host: whiskeytracker.ferrinhouse.duckdns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: whiskey-service
+            port:
+              number: 80

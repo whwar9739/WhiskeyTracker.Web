@@ -98,8 +98,11 @@ jobs:
           # Get latest manifests
           git pull origin main
           
-          # Apply Infrastructure
-          kubectl apply -f k8s/
+          # Inject Secrets
+          echo "${{ secrets.SECRETS_ENV_FILE }}" > k8s/.env
+          
+          # Apply Infrastructure (Kustomize will pick up the .env)
+          kubectl apply -k k8s/
           
           # Force Restart to pick up new Image
           kubectl rollout restart deployment/whiskey-web

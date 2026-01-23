@@ -41,8 +41,8 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     
-    // Always ensure schema exists
-    context.Database.EnsureCreated();
+    // Migrate() applies any pending migrations and creates the DB if it doesn't exist
+    context.Database.Migrate();
 
     // Only seed if the configuration explicitly says 'true'
     if (dbSection.GetValue<bool>("SeedOnStartup"))
