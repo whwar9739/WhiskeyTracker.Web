@@ -6,11 +6,6 @@ resources:
   - app-service.yaml
   - app-deployment.yaml
   - ingress.yaml
-  # Add deployment.yaml if it exists, otherwise the user needs to ensure it's included. 
-  # Assuming deployment is handled separately or missing from recent file lists, 
-  # but likely implicitly included in the user's mental model. 
-  # Checking file list earlier showed no deployment.yaml in k8s/ but ci.yml applies k8s/.
-  # I will assume standard resources are here or implicit.
   
 secretGenerator:
   - name: whiskey-secrets
