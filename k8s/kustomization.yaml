@@ -18,5 +18,3 @@ secretGenerator:
 
 patches:
   - path: patches/nfs-server.yaml
-    target:
-      kind: PersistentVolume
