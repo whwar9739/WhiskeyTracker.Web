@@ -1,0 +1,50 @@
+# --- DATABASE STORAGE ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whiskey-db-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    server: REPLACE_ME_VIA_PATCH
+    path: REPLACE_ME_VIA_PATCH
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whiskey-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# --- PHOTO STORAGE ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whiskey-photos-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: REPLACE_ME_VIA_PATCH
+    path: REPLACE_ME_VIA_PATCH
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whiskey-photos-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
