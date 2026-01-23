@@ -80,29 +80,19 @@ jobs:
 
   # 3. DEPLOY TO PI CLUSTER
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: test  # Waits for tests to pass
     if: github.ref == 'refs/heads/main' # Only runs on main branch
     steps:
-    - name: Deploy via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.PI_HOST }}
-        username: ${{ secrets.PI_USER }}
-        key: ${{ secrets.PI_SSH_KEY }}
-        script: |
-          # Go to repo on Pi
-          cd ~/whiskeytracker.web || git clone https://github.com/whwar9739/whiskeytracker.web.git ~/whiskeytracker.web
-          cd ~/whiskeytracker.web
-          
-          # Get latest manifests
-          git pull origin main
-          
-          # Inject Secrets
-          echo "${{ secrets.SECRETS_ENV_FILE }}" > k8s/.env
-          
-          # Apply Infrastructure (Kustomize will pick up the .env)
-          kubectl apply -k k8s/
-          
-          # Force Restart to pick up new Image
-          kubectl rollout restart deployment/whiskey-web
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Inject Secrets
+      run: |
+        echo "${{ secrets.SECRETS_ENV_FILE }}" > k8s/.env
+      
+    - name: Apply Infrastructure
+      run: kubectl apply -k k8s/
+      
+    - name: Restart Deployment
+      run: kubectl rollout restart deployment/whiskey-web
