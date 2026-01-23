@@ -1,14 +1,3 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -40,11 +29,11 @@ spec:
                   key: db-password
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
-              name: postgres-storage
+              name: db-storage
       volumes:
-        - name: postgres-storage
+        - name: db-storage
           persistentVolumeClaim:
-            claimName: postgres-pvc
+            claimName: whiskey-db-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -54,6 +43,4 @@ spec:
   selector:
     app: postgres
   ports:
-    - protocol: TCP
-      port: 5432
-      targetPort: 5432
+    - port: 5432

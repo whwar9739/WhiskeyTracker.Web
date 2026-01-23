@@ -1,6 +1,5 @@
-name: Whiskey Tracker CI/CD
+name: CI/CD Pipeline
 
-# Trigger this workflow on Push to Main OR Pull Requests to Main
 on:
   push:
     branches: [ "main" ]
@@ -9,12 +8,48 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  # This automatically sets the image name to whwar9739/whiskeytracker.web
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # 1. BUILD & PUSH IMAGE
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  # 2. RUN TESTS (Blocks deployment if fails)
   test:
     runs-on: ubuntu-latest
-    # Add Postgres Service
+    needs: build-and-push
     services:
       postgres:
         image: postgres:15-alpine
@@ -35,63 +70,36 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
-        
-    - name: Restore dependencies
-      run: dotnet restore
-      
-    - name: Build
-      run: dotnet build --no-restore
-      
+    
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test
       env:
-        # ENV 3 CONFIGURATION (CI/CD)
         Database__Provider: Postgres
         Database__ConnectionString: "Host=localhost;Database=whiskey_test_db;Username=postgres;Password=whiskeypass"
         Database__SeedOnStartup: true
 
-  build-and-push-image:
-    needs: test
+  # 3. DEPLOY TO PI CLUSTER
+  deploy:
     runs-on: ubuntu-latest
-    # Only run this step if tests passed AND it is a push to main
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    permissions:
-      contents: read
-      packages: write
-
+    needs: test  # Waits for tests to pass
+    if: github.ref == 'refs/heads/main' # Only runs on main branch
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@v4
-
-      # Set up QEMU to allow building for ARM64 (Raspberry Pi)
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'format("refs/heads/{0}", "main")' }}
-            type=sha
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PI_HOST }}
+        username: ${{ secrets.PI_USER }}
+        key: ${{ secrets.PI_SSH_KEY }}
+        script: |
+          # Go to repo on Pi
+          cd ~/whiskeytracker.web || git clone https://github.com/whwar9739/whiskeytracker.web.git ~/whiskeytracker.web
+          cd ~/whiskeytracker.web
+          
+          # Get latest manifests
+          git pull origin main
+          
+          # Apply Infrastructure
+          kubectl apply -f k8s/
+          
+          # Force Restart to pick up new Image
+          kubectl rollout restart deployment/whiskey-web

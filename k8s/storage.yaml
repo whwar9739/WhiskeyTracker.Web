@@ -1,0 +1,52 @@
+# --- DATABASE STORAGE ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whiskey-db-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  nfs:
+    # IP of your 'pinas'
+    server: 192.168.8.1
+    # Path found via 'showmount -e'
+    path: /export/whiskey-db
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whiskey-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# --- PHOTO STORAGE ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whiskey-photos-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: 192.168.8.1
+    path: /export/whiskey-photos
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whiskey-photos-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
