@@ -34,6 +34,9 @@ public class Whiskey
 
     public string? ImageFileName { get; set; }
 
+    [MaxLength(2000)]
+    public string? GeneralNotes { get; set; }
+
     public List<Bottle> Bottles { get; set; } = new();
     public List<TastingNote> TastingNotes { get; set; } = new();
 

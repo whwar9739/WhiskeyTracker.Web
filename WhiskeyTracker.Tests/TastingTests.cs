@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Pages.Tasting;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,25 @@ public class TastingTests
         Assert.Equal("Tasting on Dec 31, 1999", pageModel.Session.Title);
     }
 
+    // --- Helper to Mock User ---
+    private void SetMockUser(PageModel page, string userId)
+    {
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
+        };
+        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+        page.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext
+        {
+            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+            {
+                User = claimsPrincipal
+            }
+        };
+    }
+
     [Fact]
     public async Task Create_SavesAndRedirectsToWizard()
     {
@@ -48,6 +68,9 @@ public class TastingTests
             Session = new TastingSession { Title = "Epic Night" }
         };
 
+        // MOCK USER
+        SetMockUser(pageModel, "test-user-id");
+
         var result = await pageModel.OnPostAsync();
 
         var redirect = Assert.IsType<RedirectToPageResult>(result);
@@ -55,6 +78,7 @@ public class TastingTests
 
         var savedSession = await context.TastingSessions.FirstAsync();
         Assert.Equal("Epic Night", savedSession.Title);
+        Assert.Equal("test-user-id", savedSession.UserId); // Check UserId
         Assert.NotNull(redirect.RouteValues);
         Assert.Equal(savedSession.Id, redirect.RouteValues["sessionId"]);
     }

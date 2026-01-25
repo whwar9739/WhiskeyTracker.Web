@@ -140,6 +140,14 @@
                 </table>
             }
 
+            @if (!string.IsNullOrWhiteSpace(Model.Whiskey.GeneralNotes))
+            {
+                <div class="mt-4 mb-4 p-4 bg-light rounded border">
+                    <h3 class="h5 mb-3">General Notes</h3>
+                    <p style="white-space: pre-wrap;">@Model.Whiskey.GeneralNotes</p>
+                </div>
+            }
+
             <div class="mt-5">
                 <div class="d-flex justify-content-between align-items-center mb-3 bg-light p-2 rounded">
                     <h3 class="h5 m-0">Tasting Journal</h3>

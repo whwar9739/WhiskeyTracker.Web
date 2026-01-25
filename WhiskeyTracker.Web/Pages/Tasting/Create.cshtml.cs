@@ -32,6 +32,8 @@ public class CreateModel : PageModel
     {
         if (!ModelState.IsValid) return Page();
 
+        Session.UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
         _context.TastingSessions.Add(Session);
         await _context.SaveChangesAsync();
 

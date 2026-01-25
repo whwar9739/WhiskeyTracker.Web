@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Pages.Whiskies;
@@ -42,6 +43,25 @@ public class BottleTests
         Assert.False(pageModel.NewBottle.IsInfinityBottle);     // Default False
     }
 
+    // --- Helper to Mock User ---
+    private void SetMockUser(PageModel page, string userId)
+    {
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
+        };
+        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+        page.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext
+        {
+            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+            {
+                User = claimsPrincipal
+            }
+        };
+    }
+
     [Fact]
     public async Task AddBottle_SavesNewBottle_OnPost()
     {
@@ -55,10 +75,15 @@ public class BottleTests
             NewBottle = new Bottle { WhiskeyId = 1, PurchaseDate = null }
         };
 
+        // MOCK USER
+        SetMockUser(pageModel, "test-user-id");
+
         var result = await pageModel.OnPostAsync();
 
         Assert.IsType<RedirectToPageResult>(result);
         Assert.Single(context.Bottles);
+        var savedBottle = await context.Bottles.FirstAsync();
+        Assert.Equal("test-user-id", savedBottle.UserId);
     }
 
     [Fact]

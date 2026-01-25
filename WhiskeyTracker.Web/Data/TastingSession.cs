@@ -6,6 +6,8 @@ public class TastingSession
 {
     public int Id { get; set; }
 
+    public string? UserId { get; set; }
+
     [Required]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
