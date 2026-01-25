@@ -330,6 +330,31 @@ public class WhiskiesTests
     }
 
     [Fact]
+    public async Task Edit_OnPost_UpdatesGeneralNotes()
+    {
+        // Arrange
+        using var context = GetInMemoryContext();
+        var originalWhiskey = new Whiskey { Id = 1, Name = "Original", GeneralNotes = "Old Notes" };
+        context.Whiskies.Add(originalWhiskey);
+        await context.SaveChangesAsync();
+        context.ChangeTracker.Clear();
+
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        var pageModel = new EditModel(context, mockEnv.Object)
+        {
+            Whiskey = new Whiskey { Id = 1, Name = "Original", GeneralNotes = "New Fresh Notes" }
+        };
+
+        // Act
+        var result = await pageModel.OnPostAsync();
+
+        // Assert
+        Assert.IsType<RedirectToPageResult>(result);
+        var updatedWhiskey = await context.Whiskies.FindAsync(1);
+        Assert.Equal("New Fresh Notes", updatedWhiskey.GeneralNotes);
+    }
+
+    [Fact]
     public async Task Edit_OnPost_HandlesConcurrencyError()
     {
         // Arrange

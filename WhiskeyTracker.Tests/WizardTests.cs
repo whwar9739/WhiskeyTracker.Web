@@ -23,10 +23,19 @@ public class WizardTests
         return new AppDbContext(options);
     }
 
-    // Helper to Initialize PageModel with TempData
+    // Helper to Initialize PageModel with TempData AND Mock User
     private WizardModel CreateWizardModel(AppDbContext context)
     {
         var httpContext = new DefaultHttpContext();
+        
+        // MOCK USER
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, "test-user-id")
+        };
+        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
+        httpContext.User = new System.Security.Claims.ClaimsPrincipal(identity);
+
         var modelState = new ModelStateDictionary();
         var actionContext = new ActionContext(httpContext, new Microsoft.AspNetCore.Routing.RouteData(), new PageActionDescriptor(), modelState);
         var modelMetadataProvider = new EmptyModelMetadataProvider();

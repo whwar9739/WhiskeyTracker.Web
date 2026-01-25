@@ -1,13 +1,20 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WhiskeyTracker.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/");
+});
 
 // ---------------------------------------------------------
 // 1. DATABASE CONFIGURATION (The Switchboard)
 // ---------------------------------------------------------
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<AppDbContext>();
+
 var dbSection = builder.Configuration.GetSection("Database");
 var provider = dbSection["Provider"]; 
 var connectionString = dbSection["ConnectionString"] ?? builder.Configuration.GetConnectionString("DefaultConnection");
@@ -40,15 +47,16 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     
     // Migrate() applies any pending migrations and creates the DB if it doesn't exist
-    context.Database.Migrate();
+    // context.Database.Migrate(); // NOTE: Ensure this is safe for your environment
 
     // Only seed if the configuration explicitly says 'true'
     if (dbSection.GetValue<bool>("SeedOnStartup"))
     {
         Console.WriteLine("--> Seeding Data...");
-        DbInitializer.Initialize(context);
+        await DbInitializer.Initialize(context, userManager);
     }
 }
 
@@ -61,7 +69,10 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapHealthChecks("/health");
 app.MapRazorPages();
 

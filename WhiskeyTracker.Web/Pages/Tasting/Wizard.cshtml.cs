@@ -102,6 +102,7 @@ public class WizardModel : PageModel
         }
 
         _context.TastingNotes.Add(NewNote);
+        NewNote.UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Tasting note added successfully! Ready for the next pour!";

@@ -14,6 +14,9 @@ public class Bottle
 {
     public int Id { get; set; }
 
+    // --- Ownership ---
+    public string? UserId { get; set; }
+
     // --- The Link to the Whiskey Definition ---
     [Required]
     public int WhiskeyId { get; set; } // Foreign Key

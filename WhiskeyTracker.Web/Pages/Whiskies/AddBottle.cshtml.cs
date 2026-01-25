@@ -52,6 +52,8 @@ public class AddBottleModel : PageModel
             return Page();
         }
 
+        NewBottle.UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
         _context.Bottles.Add(NewBottle);
         await _context.SaveChangesAsync();
 

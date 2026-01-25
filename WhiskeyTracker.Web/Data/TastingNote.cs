@@ -6,6 +6,8 @@ public class TastingNote
 {
     public int Id { get; set; }
 
+    public string? UserId { get; set; }
+
     public int TastingSessionId { get; set; }
     public TastingSession TastingSession { get; set; } = null!;
 
