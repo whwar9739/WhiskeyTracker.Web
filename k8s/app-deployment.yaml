@@ -27,9 +27,9 @@ spec:
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 30
-        env:
-          - name: ASPNETCORE_ENVIRONMENT
-            value: "Production"
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
           envFrom:
             - secretRef:
                 name: whiskey-secrets
