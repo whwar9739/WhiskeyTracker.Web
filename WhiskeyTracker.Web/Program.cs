@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
 using WhiskeyTracker.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +50,11 @@ switch (provider?.ToLower())
 }
 
 builder.Services.AddHealthChecks();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 builder.Services.AddSingleton(TimeProvider.System);
 
 var app = builder.Build();
@@ -71,6 +77,9 @@ using (var scope = app.Services.CreateScope())
         await DbInitializer.Initialize(context, userManager);
     }
 }
+
+
+app.UseForwardedHeaders();
 
 if (!app.Environment.IsDevelopment())
 {
