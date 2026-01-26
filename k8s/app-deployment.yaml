@@ -27,14 +27,11 @@ spec:
               port: 8080
             initialDelaySeconds: 15
             periodSeconds: 30
-          env:
             - name: ASPNETCORE_ENVIRONMENT
               value: "Production"
-            - name: Database__ConnectionString
-              valueFrom:
-                secretKeyRef:
-                  name: whiskey-secrets
-                  key: connection-string
+          envFrom:
+            - secretRef:
+                name: whiskey-secrets
           volumeMounts:
             - mountPath: /app/wwwroot/images
               name: photo-storage

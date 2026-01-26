@@ -273,6 +273,12 @@
 * Advanced search and filtering options, including filtering by bottle image.  
 * Import/export functionality.
 * Whiskey recommendation system (deliberately excluded from initial scope to maintain simplicity).
+* **Admin Pages:**
+  * User management interface.
+  * Database management (CRUD operations for the central whiskey database).
+* **Identity & Security:**
+  * Social Login integration (Google, Microsoft, etc.).
+  * Enable HTTPS for production environment (Critical for OAuth and security).
 
 **IX. Open Issues (Optional)**
 
