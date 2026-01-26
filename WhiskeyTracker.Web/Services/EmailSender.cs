@@ -20,7 +20,7 @@ public class EmailSender : IEmailSender
     {
         var emailSettings = _configuration.GetSection("EmailSettings");
         var host = emailSettings["Host"];
-        var port = int.Parse(emailSettings["Port"] ?? "587");
+        var port = int.TryParse(emailSettings["Port"], out var parsedPort) ? parsedPort : 587;
         var user = emailSettings["User"];
         var pass = emailSettings["Password"];
         var senderEmail = emailSettings["SenderEmail"] ?? "noreply@whiskeytracker.com";
