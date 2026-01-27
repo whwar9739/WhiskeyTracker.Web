@@ -38,9 +38,6 @@ spec:
           volumeMounts:
             - mountPath: /app/wwwroot/images
               name: photo-storage
-            - mountPath: /home/app/.aspnet/DataProtection-Keys
-              name: photo-storage
-              subPath: keys
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
