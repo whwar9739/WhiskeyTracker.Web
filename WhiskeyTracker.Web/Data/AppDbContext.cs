@@ -1,10 +1,10 @@
-// WhiskeyTracker.Web/Data/AppDbContext.cs
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace WhiskeyTracker.Web.Data;
 
-public class AppDbContext : IdentityDbContext
+public class AppDbContext : IdentityDbContext, IDataProtectionKeyContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -13,4 +13,6 @@ public class AppDbContext : IdentityDbContext
     public DbSet<TastingSession> TastingSessions { get; set; }
     public DbSet<TastingNote> TastingNotes { get; set; }
     public DbSet<BlendComponent> BlendComponents { get; set; }
+
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 }
