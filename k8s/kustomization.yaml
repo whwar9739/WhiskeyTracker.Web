@@ -6,7 +6,6 @@ resources:
   - app-service.yaml
   - app-deployment.yaml
   - postgres.yaml
-  - ingress.yaml
   
 secretGenerator:
   - name: whiskey-secrets

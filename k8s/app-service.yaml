@@ -5,8 +5,9 @@ metadata:
 spec:
   selector:
     app: whiskey-tracker
-  type: ClusterIP
+  type: NodePort
   ports:
     - protocol: TCP
       port: 80
       targetPort: 8080
+      nodePort: 30080
