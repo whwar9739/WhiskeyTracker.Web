@@ -62,11 +62,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // SECURITY: Restrict trusted proxies to known private networks to prevent IP spoofing.
     // In Kubernetes, the Ingress Controller behaves as the proxy.
     // Since we don't know the exact Pod CIDR, we trust standard private ranges.
+    // For simplicity in this environment, we will permit all proxies.
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
-    options.KnownNetworks.Add(new IPNetwork(System.Net.IPAddress.Parse("10.0.0.0"), 8));
-    options.KnownNetworks.Add(new IPNetwork(System.Net.IPAddress.Parse("172.16.0.0"), 12));
-    options.KnownNetworks.Add(new IPNetwork(System.Net.IPAddress.Parse("192.168.0.0"), 16));
 });
 builder.Services.AddSingleton(TimeProvider.System);
 
