@@ -81,7 +81,7 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
     
     // Migrate() applies any pending migrations and creates the DB if it doesn't exist
-    // context.Database.Migrate(); // NOTE: Ensure this is safe for your environment
+    context.Database.Migrate(); // NOTE: Ensure this is safe for your environment
 
     // Only seed if the configuration explicitly says 'true'
     if (dbSection.GetValue<bool>("SeedOnStartup"))
