@@ -93,6 +93,18 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders();
 
+// TERMINAL LOGGING FOR DEBUGGING
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"--> Request Scheme: {context.Request.Scheme}");
+    Console.WriteLine($"--> Remote IP: {context.Connection.RemoteIpAddress}");
+    foreach (var header in context.Request.Headers)
+    {
+        Console.WriteLine($"--> Header: {header.Key} = {header.Value}");
+    }
+    await next();
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
