@@ -65,6 +65,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // For simplicity in this environment, we will permit all proxies.
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
+    options.ForwardLimit = null; // Disable limit to handle Nginx -> K8s Ingress -> Pod
 });
 builder.Services.AddSingleton(TimeProvider.System);
 
