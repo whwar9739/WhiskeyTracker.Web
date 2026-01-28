@@ -93,14 +93,14 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders();
 
-// TERMINAL LOGGING FOR DEBUGGING
+// Fix for Kubernetes Ingress stripping X-Forwarded-Proto
 app.Use(async (context, next) =>
 {
-    Console.WriteLine($"--> Request Scheme: {context.Request.Scheme}");
-    Console.WriteLine($"--> Remote IP: {context.Connection.RemoteIpAddress}");
-    foreach (var header in context.Request.Headers)
+    // If we see X-Forwarded-Host, we know we are behind the Nginx/Ingress proxy chain.
+    // Since Nginx handles SSL, we force the scheme to https so redirects are correct.
+    if (context.Request.Headers.ContainsKey("X-Forwarded-Host"))
     {
-        Console.WriteLine($"--> Header: {header.Key} = {header.Value}");
+        context.Request.Scheme = "https";
     }
     await next();
 });
