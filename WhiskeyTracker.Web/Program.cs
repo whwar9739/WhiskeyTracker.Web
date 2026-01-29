@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(3);
+    options.Limits.MaxRequestHeadersTotalSize = 64 * 1024; // Increase to 64KB for large cookies
+    options.Limits.MaxRequestHeaderCount = 200; // Allow more headers
 });
 
 builder.Services.AddRazorPages(options =>
