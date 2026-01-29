@@ -93,7 +93,7 @@ jobs:
           containers:
           - name: loader
             image: alpine  # Lightweight, has tar
-            command: ["sleep", "infinity"]
+            command: ["sleep", "3600"]
             volumeMounts:
             - mountPath: /app
               name: app-storage
