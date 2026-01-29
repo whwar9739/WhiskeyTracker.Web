@@ -2,36 +2,33 @@
 
 ## ☸️ Kubernetes Deployment
 
-This project uses **Kustomize** to manage environment-specific configurations (Secrets, NFS IPs) and **NodePort** services for external access.
+This project uses **Kustomize** for configuration management and a **Binary Deployment** strategy on external NFS storage.
 
-### Prerequisites (Raspberry Pi / K3s/ MicroK8s)
+### Prerequisites
 1.  **Kubernetes Cluster**: Ensure your cluster is running.
-2.  **NFS Server**: You need an NFS server for persistent storage (photos).
-3.  **Docker Registry Secret**: You must manually create the secret for pulling images from GHCR:
-    ```bash
-    kubectl create secret docker-registry ghcr-secret \
-      --docker-server=ghcr.io \
-      --docker-username=YOUR_GITHUB_USER \
-      --docker-password=YOUR_GITHUB_TOKEN \
-      --docker-email=YOUR_EMAIL
-    ```
+2.  **NFS Server**: You need an NFS server for persistent storage.
+    *   **Photos**: `/export/whiskey-photos` (For user uploads)
+    *   **App Code**: `/export/whiskey-app` (For application binaries)
+
+### 📦 Binary Deployment Strategy
+We do **not** build custom Docker images for each release. Instead:
+1.  CI compiles the .NET application.
+2.  Binaries are copied to the **NFS App Share** (`/export/whiskey-app`).
+3.  Pods run a generic runtime image (`mcr.microsoft.com/dotnet/aspnet:10.0`) and mount the code from NFS.
+4.  Deployment is restarted to load the new binaries.
 
 ### 🔐 Managing App Secrets
-We use a **SecretGenerator** strategy for application secrets.
-*   The CI pipeline generates a versioned secret (e.g., `whiskey-secrets-h5k2`) automatically on every deploy.
-*   This triggers an automatic pod rollout when secrets change.
+We use a **SecretGenerator** strategy. The CI pipeline generates a versioned secret (e.g., `whiskey-secrets-h5k2`) automatically on every deploy.
 
 **Required Secrets (GitHub):**
-You must configure the `SECRETS_ENV_FILE` secret in GitHub with the following content:
-
+Configure `SECRETS_ENV_FILE` in GitHub with the following content:
 ```env
 # Database Credentials
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=your_super_secret_password
 POSTGRES_DB=whiskey_prod
 
-# Connection String (Used by both App and Data Protection)
-# IMPORTANT: 'host=postgres-service' refers to the internal K8s Service name for the DB
+# Connection String
 connection-string=Host=postgres-service;Database=whiskey_prod;Username=postgres;Password=your_super_secret_password
 
 # Authentication (Google)
@@ -46,41 +43,28 @@ EmailSettings__Password=your_app_password
 ```
 
 ### 🌍 Networking (NodePort)
-We use a **NodePort** service to expose the application on a static port, simplifying the integration with external proxies like Nginx Proxy Manager.
+The application is exposed via a **NodePort** service on port `30080`.
+Typically, you will use a reverse proxy (like Nginx Proxy Manager) to forward traffic from `whiskeytracker.yourdomain.com` to `NODE_IP:30080`.
 
-*   **Service Type**: `NodePort`
-*   **External Port**: `30080`
-*   **Internal Port**: `8080`
-
-#### Accessing from Outside
-You typically put an **Nginx Proxy Manager (NPM)** or another reverse proxy in front of the cluster.
-
-**Nginx Proxy Manager Configuration:**
-1.  **Domain Names**: `whiskeytracker.ferrinhouse.org`
-2.  **Scheme**: `http` (The cluster listens on HTTP)
-3.  **Forward Hostname / IP**: `192.168.x.x` (IP of your Kubernetes Node)
-4.  **Forward Port**: `30080`
-5.  **SSL Tab**:
-    *   **Force SSL**: Enabled
-    *   **Certificate**: Valid Let's Encrypt Certificate
-
-**Note on Google Authentication:**
-The application automatically forces the request scheme to `https` when it detects it is behind a proxy (`X-Forwarded-Host` present). This ensures that Google OAuth redirects work correctly even though NPM terminates SSL.
-
-### 💾 Storage (NFS)
-The `k8s/storage.yaml` file is generic.
-The actual NFS Server IP is injected via `k8s/patches/nfs-server.yaml`.
+### 💾 Storage Configuration
+Storage is defined in `k8s/storage.yaml`.
+The NFS Server IP is injected via `k8s/patches/nfs-server.yaml`.
 
 **To change the NFS IP:**
 1.  Edit `k8s/patches/nfs-server.yaml`.
-2.  Commit and Push.
+2.  Update the IP for both `whiskey-db-pv`, `whiskey-photos-pv`, and `whiskey-app-pv`.
 
 ### 🚀 Manual Deployment
 If you need to deploy manually from the Pi:
-
-1.  Create `k8s/.env` with your secrets (see above).
-2.  Run:
+1.  **Code Updates**: You must manually copy published binaries to your NFS server at `/export/whiskey-app`.
+2.  **Infrastructure**:
     ```bash
+    # Create secrets file
+echo "# TODO: Populate this file with secrets as described in the 'Managing App Secrets' section" > k8s/.env
+    
+    # Apply K8s manifests
     kubectl apply -k k8s/
+    
+    # Restart app to pick up code changes
+    kubectl rollout restart deployment/whiskey-web
     ```
-    *Note: This will deploy the app, database, and storage configurations.*

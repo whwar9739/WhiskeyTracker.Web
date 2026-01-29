@@ -52,3 +52,31 @@ spec:
   resources:
     requests:
       storage: 10Gi
+
+---
+# --- APP CODE STORAGE ---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whiskey-app-pv
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  nfs:
+    server: REPLACE_ME_VIA_PATCH
+    path: REPLACE_ME_VIA_PATCH
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: whiskey-app-pvc
+spec:
+  storageClassName: ""
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
