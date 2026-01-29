@@ -18,9 +18,12 @@ spec:
         fsGroup: 1654
       containers:
         - name: whiskey-web
-          # Update this to your GHCR path
-          image: ghcr.io/whwar9739/whiskeytracker.web:latest
+          # Generic ASP.NET Core Runtime
+          image: mcr.microsoft.com/dotnet/aspnet:10.0
           imagePullPolicy: Always
+          # Run the compiled DLL from the volume
+          command: ["dotnet", "WhiskeyTracker.Web.dll"]
+          workingDir: /app
           ports:
             - containerPort: 8080
           livenessProbe:
@@ -37,15 +40,22 @@ spec:
                 secretKeyRef:
                   name: whiskey-secrets
                   key: connection-string
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
           envFrom:
             - secretRef:
                 name: whiskey-secrets
           volumeMounts:
+            - mountPath: /app
+              name: app-storage
             - mountPath: /app/wwwroot/images
               name: photo-storage
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
+        - name: app-storage
+          persistentVolumeClaim:
+            claimName: whiskey-app-pvc
         - name: photo-storage
           persistentVolumeClaim:
             claimName: whiskey-photos-pvc

@@ -15,3 +15,13 @@ spec:
   nfs:
     server: pinas
     path: /export/whiskey-photos
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: whiskey-app-pv
+spec:
+  nfs:
+    server: pinas
+    path: /export/whiskey-app
+
