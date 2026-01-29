@@ -11,6 +11,7 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(3);
     options.Limits.MaxRequestHeadersTotalSize = 128 * 1024; // Increase to 128KB
+    options.Limits.MaxRequestLineSize = 32 * 1024; // Increase URL length limit
     options.Limits.MaxRequestHeaderCount = 200; // Allow more headers
 });
 
