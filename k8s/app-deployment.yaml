@@ -50,12 +50,11 @@ spec:
               name: app-storage
             - mountPath: /app/wwwroot/images
               name: photo-storage
-      imagePullSecrets:
-        - name: ghcr-secret
       volumes:
         - name: app-storage
           persistentVolumeClaim:
             claimName: whiskey-app-pvc
         - name: photo-storage
           persistentVolumeClaim:
+
             claimName: whiskey-photos-pvc
