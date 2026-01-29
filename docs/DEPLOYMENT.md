@@ -56,7 +56,7 @@ We use a **NodePort** service to expose the application on a static port, simpli
 You typically put an **Nginx Proxy Manager (NPM)** or another reverse proxy in front of the cluster.
 
 **Nginx Proxy Manager Configuration:**
-1.  **Domain Names**: `whiskeytracker.yourdomain.com`
+1.  **Domain Names**: `whiskeytracker.ferrinhouse.org`
 2.  **Scheme**: `http` (The cluster listens on HTTP)
 3.  **Forward Hostname / IP**: `192.168.x.x` (IP of your Kubernetes Node)
 4.  **Forward Port**: `30080`
