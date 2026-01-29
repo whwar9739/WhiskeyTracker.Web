@@ -6,6 +6,12 @@ using WhiskeyTracker.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// FIX: Increase KeepAlive to prevent 502s from Nginx/Cloudflare
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(3);
+});
+
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");
