@@ -60,7 +60,7 @@ If you need to deploy manually from the Pi:
 2.  **Infrastructure**:
     ```bash
     # Create secrets file
-    echo "foo=bar" > k8s/.env 
+echo "# TODO: Populate this file with secrets as described in the 'Managing App Secrets' section" > k8s/.env
     
     # Apply K8s manifests
     kubectl apply -k k8s/
