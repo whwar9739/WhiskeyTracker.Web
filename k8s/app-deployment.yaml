@@ -56,5 +56,4 @@ spec:
             claimName: whiskey-app-pvc
         - name: photo-storage
           persistentVolumeClaim:
-
             claimName: whiskey-photos-pvc
