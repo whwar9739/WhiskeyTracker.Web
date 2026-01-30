@@ -5,7 +5,7 @@ namespace WhiskeyTracker.Web.Data;
 
 public static class DbInitializer
 {
-    public static async Task Initialize(AppDbContext context, UserManager<IdentityUser> userManager)
+    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager)
     {
         // 1. Ensure the DB exists
         context.Database.EnsureCreated();
@@ -16,8 +16,30 @@ public static class DbInitializer
 
         if (user == null)
         {
-            user = new IdentityUser { UserName = testUserEmail, Email = testUserEmail, EmailConfirmed = true };
+            user = new ApplicationUser 
+            { 
+                UserName = testUserEmail, 
+                Email = testUserEmail, 
+                EmailConfirmed = true,
+                DisplayName = "Test User" 
+            };
             await userManager.CreateAsync(user, "Password123!");
+        }
+
+        // 2b. Add Friend User
+        var friendEmail = "friend@example.com";
+        var friendUser = await userManager.FindByEmailAsync(friendEmail);
+
+        if (friendUser == null)
+        {
+            friendUser = new ApplicationUser 
+            { 
+                UserName = friendEmail, 
+                Email = friendEmail, 
+                EmailConfirmed = true,
+                DisplayName = "Drinking Buddy" 
+            };
+            await userManager.CreateAsync(friendUser, "Password123!");
         }
 
         // 3. Look for any whiskies.
@@ -70,11 +92,48 @@ public static class DbInitializer
         context.Whiskies.AddRange(whiskies);
         await context.SaveChangesAsync();
 
+        // 5. Create a Personal Collection for the user
+        var personalCollection = new Collection { Name = "My Home Bar" };
+        var officeCollection = new Collection { Name = "Office Bar" };
+        
+        context.Collections.AddRange(personalCollection, officeCollection);
+        await context.SaveChangesAsync();
+
+        // 6. Add Memberships
+        
+        // Main User - Owner of Home Bar
+        context.CollectionMembers.Add(new CollectionMember
+        {
+            CollectionId = personalCollection.Id,
+            UserId = user.Id,
+            Role = CollectionRole.Owner
+        });
+
+        // Main User - Editor of Office Bar
+        context.CollectionMembers.Add(new CollectionMember
+        {
+            CollectionId = officeCollection.Id,
+            UserId = user.Id,
+            Role = CollectionRole.Editor
+        });
+
+        // Friend User - Owner of Office Bar
+        context.CollectionMembers.Add(new CollectionMember
+        {
+            CollectionId = officeCollection.Id,
+            UserId = friendUser.Id,
+            Role = CollectionRole.Owner
+        });
+
+        await context.SaveChangesAsync();
+
+
         // Add a sample bottle linked to the user
         var bottle = new Bottle 
         { 
             WhiskeyId = whiskies[0].Id, 
-            UserId = user.Id,
+            UserId = user.Id,           // Purchaser
+            CollectionId = personalCollection.Id, // Owned by Collection
             Status = BottleStatus.Opened, 
             CapacityMl = 750, 
             CurrentVolumeMl = 400,
@@ -86,14 +145,27 @@ public static class DbInitializer
         var infinity = new Bottle
         {
             WhiskeyId = whiskies[3].Id,
-            UserId = user.Id,
+            UserId = user.Id,           // Purchaser
+            CollectionId = personalCollection.Id, // Owned by Collection
             Status = BottleStatus.Opened,
             CapacityMl = 700,
             CurrentVolumeMl = 0,
             IsInfinityBottle = true
         };
 
-        context.Bottles.AddRange(bottle, infinity);
+        // Add a bottle to the office bar
+        var officeBottle = new Bottle
+        {
+            WhiskeyId = whiskies[1].Id, // Lagavulin
+            UserId = friendUser.Id,      // Purchaser
+            CollectionId = officeCollection.Id,
+            Status = BottleStatus.Full,
+            CapacityMl = 750,
+            CurrentVolumeMl = 750,
+            PurchasePrice = 89.99m
+        };
+
+        context.Bottles.AddRange(bottle, infinity, officeBottle);
         await context.SaveChangesAsync();
     }
 }

@@ -15,7 +15,15 @@ public class Bottle
     public int Id { get; set; }
 
     // --- Ownership ---
+    // This tracks who ORIGINALLY PURCHASED the bottle.
     public string? UserId { get; set; }
+    [ForeignKey("UserId")]
+    public ApplicationUser? Purchaser { get; set; }
+
+    // --- Collection ---
+    // The bottle belongs to a collection, which determines who can see/drink it.
+    public int? CollectionId { get; set; }
+    public Collection? Collection { get; set; }
 
     // --- The Link to the Whiskey Definition ---
     [Required]

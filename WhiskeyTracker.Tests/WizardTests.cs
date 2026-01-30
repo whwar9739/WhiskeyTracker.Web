@@ -23,6 +23,13 @@ public class WizardTests
         return new AppDbContext(options);
     }
 
+    private Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> GetMockUserManager()
+    {
+        var store = new Mock<Microsoft.AspNetCore.Identity.IUserStore<ApplicationUser>>();
+        return new Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>(
+            store.Object, null, null, null, null, null, null, null, null);
+    }
+
     // Helper to Initialize PageModel with TempData AND Mock User
     private WizardModel CreateWizardModel(AppDbContext context)
     {
@@ -70,11 +77,16 @@ public class WizardTests
     {
         // ARRANGE
         using var context = GetInMemoryContext();
-        var session = new TastingSession { Date = DateOnly.FromDateTime(DateTime.Now) };
+        var session = new TastingSession { Date = DateOnly.FromDateTime(DateTime.Now), UserId = "test-user-id" };
         context.TastingSessions.Add(session);
+        
+        // SEED COLLECTION
+        context.Collections.Add(new Collection { Id = 1, Name = "Test" });
+        context.CollectionMembers.Add(new CollectionMember { CollectionId = 1, UserId = "test-user-id", Role = CollectionRole.Owner });
+
         var whiskey = new Whiskey { Name = "Test Whiskey" };
         context.Whiskies.Add(whiskey);
-        var bottle = new Bottle { WhiskeyId = whiskey.Id, Status = BottleStatus.Opened };
+        var bottle = new Bottle { WhiskeyId = whiskey.Id, Status = BottleStatus.Opened, CollectionId = 1 };
         context.Bottles.Add(bottle);
         await context.SaveChangesAsync();
 
@@ -99,14 +111,19 @@ public class WizardTests
         context.Whiskies.Add(whiskey);
         await context.SaveChangesAsync();
 
+        // SEED COLLECTION
+        context.Collections.Add(new Collection { Id = 1, Name = "Test" });
+        context.CollectionMembers.Add(new CollectionMember { CollectionId = 1, UserId = "test-user-id", Role = CollectionRole.Owner });
+ 
         var bottle = new Bottle 
         { 
             WhiskeyId = whiskey.Id, 
             CurrentVolumeMl = 700, 
-            Status = BottleStatus.Opened 
+            Status = BottleStatus.Opened,
+            CollectionId = 1
         };
         context.Bottles.Add(bottle);
-        var session = new TastingSession { Date = DateOnly.FromDateTime(DateTime.Now) };
+        var session = new TastingSession { Date = DateOnly.FromDateTime(DateTime.Now), UserId = "test-user-id" };
         context.TastingSessions.Add(session);
         await context.SaveChangesAsync();
 
@@ -137,14 +154,19 @@ public class WizardTests
         context.Whiskies.Add(whiskey);
         await context.SaveChangesAsync();
 
+        // SEED COLLECTION
+        context.Collections.Add(new Collection { Id = 1, Name = "Test" });
+        context.CollectionMembers.Add(new CollectionMember { CollectionId = 1, UserId = "test-user-id", Role = CollectionRole.Owner });
+
         var bottle = new Bottle 
         { 
             WhiskeyId = whiskey.Id,
             CurrentVolumeMl = 30, // Only a sip left
-            Status = BottleStatus.Opened 
+            Status = BottleStatus.Opened,
+            CollectionId = 1
         };
         context.Bottles.Add(bottle);
-        var session = new TastingSession();
+        var session = new TastingSession { UserId = "test-user-id" };
         context.TastingSessions.Add(session);
         await context.SaveChangesAsync();
 

@@ -7,26 +7,34 @@
 .vs/
 .vscode/
 .idea/
+.git/
 *.suo
 *.user
+*.code-workspace
 
-# --- Third-Party Libraries ---
-# Update: Point specifically to the Web project
+# --- Third-Party Libraries (High Noise) ---
+# The AI knows how Bootstrap/jQuery work; it doesn't need to read the files.
 WhiskeyTracker.Web/wwwroot/lib/
 
 # --- Static Assets ---
+# Images/Icons provide no context to the LLM
 WhiskeyTracker.Web/wwwroot/images/
 *.ico
 *.jpg
 *.png
 *.gif
+*.svg
+
+# --- Auto-Generated Code (High Token Usage) ---
+# Migrations are historical records. The AI should look at your Models/ classes
+# to understand the data, not the generated migration files.
+WhiskeyTracker.Web/Migrations/
 
 # --- Configuration & Secrets ---
-# These match recursively, so they will cover both Web and Test projects
+# Block all appsettings to prevent accidental secret leakage to the AI context,
+# unless you specifically want it to read your config structure.
+# If you need it to read config, comment these out.
 **/appsettings.json
 **/appsettings.*.json
 **/launchSettings.json
-
-# --- Auto-Generated Code ---
-# Update: Migrations are inside the Web project
-WhiskeyTracker.Web/Migrations/
+whiskey_key*

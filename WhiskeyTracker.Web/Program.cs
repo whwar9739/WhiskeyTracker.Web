@@ -25,7 +25,8 @@ builder.Services.AddRazorPages(options =>
 // 1. DATABASE CONFIGURATION (The Switchboard)
 // ---------------------------------------------------------
 // builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+// builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddDataProtection()
@@ -87,10 +88,13 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     
     // Migrate() applies any pending migrations and creates the DB if it doesn't exist
-    context.Database.Migrate(); // NOTE: Ensure this is safe for your environment
+    if (context.Database.IsRelational())
+    {
+        context.Database.Migrate(); 
+    }
 
     // Only seed if the configuration explicitly says 'true'
     if (dbSection.GetValue<bool>("SeedOnStartup"))
@@ -129,6 +133,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapHealthChecks("/health");
+app.MapControllers();
 app.MapRazorPages();
 
 app.Run();

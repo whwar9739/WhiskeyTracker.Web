@@ -33,13 +33,16 @@ public class WizardModel : PageModel
     // GET: Prepares the page for viewing
     public async Task<IActionResult> OnGetAsync(int sessionId)
     {
-
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        
         await LoadPageData(sessionId);
 
         if (Session.Id == 0)
         {
             return NotFound($"Session with ID {sessionId} not found.");
         }
+        
+        if (Session.UserId != userId) return NotFound();
 
         return Page();
     }
@@ -47,12 +50,23 @@ public class WizardModel : PageModel
     // POST: Handles the "Log & Pour Next" button
     public async Task<IActionResult> OnPostAsync(int sessionId)
     {
-        var sessionExists = await _context.TastingSessions.AnyAsync(s => s.Id == sessionId);
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        var sessionExists = await _context.TastingSessions.AnyAsync(s => s.Id == sessionId && s.UserId == userId);
         if (!sessionExists) return NotFound();
+
+        // Get my collections
+        var myCollectionIds = await _context.CollectionMembers
+            .Where(m => m.UserId == userId)
+            .Select(m => m.CollectionId)
+            .ToListAsync();
 
         if (SelectedBottleId.HasValue)
         {
-            var bottle = await _context.Bottles.FindAsync(SelectedBottleId.Value);
+            // Verify bottle is in one of my collections
+            var bottle = await _context.Bottles
+                .FirstOrDefaultAsync(b => b.Id == SelectedBottleId.Value && b.CollectionId.HasValue && myCollectionIds.Contains(b.CollectionId.Value));
+                
             if (bottle != null)
             {
                 NewNote.WhiskeyId = bottle.WhiskeyId;
@@ -68,6 +82,10 @@ public class WizardModel : PageModel
                         TempData["InfoMessage"] = "You killed the bottle! 💀 It has been marked as Finished.";
                     }
                 }
+            }
+            else
+            {
+                 ModelState.AddModelError("SelectedBottleId", "Invalid Bottle Selection (Access Denied).");
             }
         }
         else if (SelectedWhiskeyId.HasValue)
@@ -102,7 +120,7 @@ public class WizardModel : PageModel
         }
 
         _context.TastingNotes.Add(NewNote);
-        NewNote.UserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        NewNote.UserId = userId; // Ensure consistent usage
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Tasting note added successfully! Ready for the next pour!";
@@ -124,9 +142,17 @@ public class WizardModel : PageModel
         }
         NewNote = new TastingNote();
 
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        // Get my collections
+        var myCollectionIds = await _context.CollectionMembers
+            .Where(m => m.UserId == userId)
+            .Select(m => m.CollectionId)
+            .ToListAsync();
+
         var bottles = await _context.Bottles
             .Include(b => b.Whiskey)
-            .Where(b => b.Status != BottleStatus.Empty)
+            .Where(b => b.Status != BottleStatus.Empty && b.CollectionId.HasValue && myCollectionIds.Contains(b.CollectionId.Value))
             .OrderBy(b => b.Whiskey != null ? b.Whiskey.Name : string.Empty)
             .ToListAsync();
 

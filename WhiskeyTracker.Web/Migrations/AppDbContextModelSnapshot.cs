@@ -284,6 +284,9 @@ namespace WhiskeyTracker.Web.Migrations
                     b.Property<int>("CapacityMl")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("CollectionId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CurrentVolumeMl")
                         .HasColumnType("integer");
 
@@ -312,9 +315,58 @@ namespace WhiskeyTracker.Web.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CollectionId");
+
+                    b.HasIndex("UserId");
+
                     b.HasIndex("WhiskeyId");
 
                     b.ToTable("Bottles");
+                });
+
+            modelBuilder.Entity("WhiskeyTracker.Web.Data.Collection", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Collections");
+                });
+
+            modelBuilder.Entity("WhiskeyTracker.Web.Data.CollectionMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CollectionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CollectionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CollectionMembers");
                 });
 
             modelBuilder.Entity("WhiskeyTracker.Web.Data.TastingNote", b =>
@@ -508,13 +560,44 @@ namespace WhiskeyTracker.Web.Migrations
 
             modelBuilder.Entity("WhiskeyTracker.Web.Data.Bottle", b =>
                 {
+                    b.HasOne("WhiskeyTracker.Web.Data.Collection", "Collection")
+                        .WithMany("Bottles")
+                        .HasForeignKey("CollectionId");
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Purchaser")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
                     b.HasOne("WhiskeyTracker.Web.Data.Whiskey", "Whiskey")
                         .WithMany("Bottles")
                         .HasForeignKey("WhiskeyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Collection");
+
+                    b.Navigation("Purchaser");
+
                     b.Navigation("Whiskey");
+                });
+
+            modelBuilder.Entity("WhiskeyTracker.Web.Data.CollectionMember", b =>
+                {
+                    b.HasOne("WhiskeyTracker.Web.Data.Collection", "Collection")
+                        .WithMany("Members")
+                        .HasForeignKey("CollectionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Collection");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WhiskeyTracker.Web.Data.TastingNote", b =>
@@ -545,6 +628,13 @@ namespace WhiskeyTracker.Web.Migrations
             modelBuilder.Entity("WhiskeyTracker.Web.Data.Bottle", b =>
                 {
                     b.Navigation("TastingNotes");
+                });
+
+            modelBuilder.Entity("WhiskeyTracker.Web.Data.Collection", b =>
+                {
+                    b.Navigation("Bottles");
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("WhiskeyTracker.Web.Data.TastingSession", b =>

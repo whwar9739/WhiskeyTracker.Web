@@ -18,6 +18,24 @@ public class PourTests
         return new AppDbContext(options);
     }
 
+    private void SetMockUser(PageModel page, string userId)
+    {
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
+        };
+        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+        page.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext
+        {
+            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+            {
+                User = claimsPrincipal
+            }
+        };
+    }
+
     [Fact]
     public async Task OnGet_PopulatesModel_AndFiltersInfinityBottles()
     {
@@ -28,17 +46,22 @@ public class PourTests
         context.Whiskies.AddRange(whiskey, infinityWhiskey);
         await context.SaveChangesAsync();
 
-        var sourceBottle = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 100, Status = BottleStatus.Opened };
-        var infinityBottle = new Bottle { WhiskeyId = infinityWhiskey.Id, IsInfinityBottle = true, Status = BottleStatus.Opened };
+        var collection = new Collection { Id = 1, Name = "Test Bar" };
+        context.Collections.Add(collection);
+        context.CollectionMembers.Add(new CollectionMember { CollectionId = 1, UserId = "test-user", Role = CollectionRole.Owner });
+
+        var sourceBottle = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 100, Status = BottleStatus.Opened, CollectionId = 1 };
+        var infinityBottle = new Bottle { WhiskeyId = infinityWhiskey.Id, IsInfinityBottle = true, Status = BottleStatus.Opened, CollectionId = 1 };
         
         // Ensure this one is explicitly Sealed
-        var closedInfinityBottle = new Bottle { WhiskeyId = infinityWhiskey.Id, IsInfinityBottle = true, Status = BottleStatus.Full }; 
+        var closedInfinityBottle = new Bottle { WhiskeyId = infinityWhiskey.Id, IsInfinityBottle = true, Status = BottleStatus.Full, CollectionId = 1 }; 
         
         context.Bottles.AddRange(sourceBottle, infinityBottle, closedInfinityBottle);
         await context.SaveChangesAsync();
 
         var timeProvider = new FakeTimeProvider(DateTimeOffset.UtcNow);
         var pageModel = new PourModel(context, timeProvider);
+        SetMockUser(pageModel, "test-user");
 
         // ACT
         var result = await pageModel.OnGetAsync(sourceBottle.Id);
@@ -65,10 +88,15 @@ public class PourTests
         var fixedTime = new DateTimeOffset(2023, 10, 31, 12, 0, 0, TimeSpan.Zero);
         var timeProvider = new FakeTimeProvider(fixedTime);
 
+        // Create Collection
+        var collection = new Collection { Id = 1, Name = "Test Bar" };
+        context.Collections.Add(collection);
+        context.CollectionMembers.Add(new CollectionMember { CollectionId = 1, UserId = "test-user", Role = CollectionRole.Owner });
+
         // Source: 100ml
-        var source = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 100, Status = BottleStatus.Opened };
+        var source = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 100, Status = BottleStatus.Opened, CollectionId = 1 };
         // Target: 500ml
-        var target = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 500, IsInfinityBottle = true, Status = BottleStatus.Opened };
+        var target = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 500, IsInfinityBottle = true, Status = BottleStatus.Opened, CollectionId = 1 };
         
         context.Bottles.AddRange(source, target);
         await context.SaveChangesAsync();
@@ -79,6 +107,7 @@ public class PourTests
             TargetInfinityBottleId = target.Id,
             PourAmountMl = 40
         };
+        SetMockUser(pageModel, "test-user");
 
         // ACT
         var result = await pageModel.OnPostAsync();
@@ -115,8 +144,12 @@ public class PourTests
         context.Whiskies.Add(whiskey);
         await context.SaveChangesAsync();
 
-        var source = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 50, Status = BottleStatus.Opened };
-        var target = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 0, IsInfinityBottle = true, Status = BottleStatus.Opened };
+        var collection = new Collection { Id = 1, Name = "Test Bar" };
+        context.Collections.Add(collection);
+        context.CollectionMembers.Add(new CollectionMember { CollectionId = 1, UserId = "test-user", Role = CollectionRole.Owner });
+
+        var source = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 50, Status = BottleStatus.Opened, CollectionId = 1 };
+        var target = new Bottle { WhiskeyId = whiskey.Id, CurrentVolumeMl = 0, IsInfinityBottle = true, Status = BottleStatus.Opened, CollectionId = 1 };
         context.Bottles.AddRange(source, target);
         await context.SaveChangesAsync();
 
@@ -126,6 +159,7 @@ public class PourTests
             TargetInfinityBottleId = target.Id,
             PourAmountMl = 50 // Pouring everything
         };
+        SetMockUser(pageModel, "test-user");
 
         // ACT
         await pageModel.OnPostAsync();

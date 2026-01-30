@@ -20,11 +20,23 @@ public class DetailsModel : PageModel
     {
         if (id == null) return NotFound();
 
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
         // fetch the whiskey AND its bottles in one go
+        // Logic: Show bottles that belong to a collection I am a member of.
+        var myCollectionIds = await _context.CollectionMembers
+            .Where(m => m.UserId == userId)
+            .Select(m => m.CollectionId)
+            .ToListAsync();
+
         var whiskey = await _context.Whiskies
-            .Include(w => w.Bottles) // <--- Loads the inventory data
-            .Include(tn => tn.TastingNotes) // <--- Loads the tasting notes
-              .ThenInclude(ts => ts.TastingSession) // <--- Loads the tasting session for each note
+            .Include(w => w.Bottles.Where(b => b.CollectionId.HasValue && myCollectionIds.Contains(b.CollectionId.Value)))
+              .ThenInclude(b => b.Collection)
+            .Include(w => w.Bottles.Where(b => b.CollectionId.HasValue && myCollectionIds.Contains(b.CollectionId.Value)))
+              .ThenInclude(b => b.Purchaser)
+
+            .Include(tn => tn.TastingNotes.Where(n => n.UserId == userId)) // <--- Keep Notes Private for now
+              .ThenInclude(ts => ts.TastingSession) 
             .FirstOrDefaultAsync(m => m.Id == id);
 
         if (whiskey == null) return NotFound();

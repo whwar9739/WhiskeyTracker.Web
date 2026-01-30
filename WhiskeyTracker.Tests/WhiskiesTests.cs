@@ -20,6 +20,31 @@ public class WhiskiesTests
         return new AppDbContext(options);
     }
 
+    private Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> GetMockUserManager()
+    {
+        var store = new Mock<Microsoft.AspNetCore.Identity.IUserStore<ApplicationUser>>();
+        return new Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>(
+            store.Object, null, null, null, null, null, null, null, null);
+    }
+
+    private void SetMockUser(PageModel page, string userId)
+    {
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
+        };
+        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+        page.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext
+        {
+            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
+            {
+                User = claimsPrincipal
+            }
+        };
+    }
+
     // --- INDEX TESTS ---
     [Fact]
     public async Task Index_ReturnsAllWhiskies_WhenNoSearch()
@@ -29,7 +54,10 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Name = "Macallan", Region = "Speyside" });
         await context.SaveChangesAsync();
 
+
+
         var pageModel = new IndexModel(context);
+        SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
 
@@ -45,7 +73,10 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Name = "Balvenie", Distillery = "Balvenie" });
         await context.SaveChangesAsync();
 
+
+
         var pageModel = new IndexModel(context) { SearchString = "Ard" };
+        SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
 
@@ -61,7 +92,10 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Name = "B", Region = "Speyside" });
         await context.SaveChangesAsync();
 
+
+
         var pageModel = new IndexModel(context) { WhiskeyRegion = "Islay" };
+        SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
 
@@ -148,7 +182,10 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Id = 1, Name = "Test" });
         await context.SaveChangesAsync();
 
+
+
         var pageModel = new DetailsModel(context);
+        SetMockUser(pageModel, "test-user");
         await pageModel.OnGetAsync(1);
 
         Assert.NotNull(pageModel.Whiskey);
@@ -293,6 +330,7 @@ public class WhiskiesTests
         await context.SaveChangesAsync();
         var mockEnv = new Mock<IWebHostEnvironment>();
         var pageModel = new EditModel(context, mockEnv.Object);
+        SetMockUser(pageModel, "test-user");
 
         // Act
         var result = await pageModel.OnGetAsync(1);
