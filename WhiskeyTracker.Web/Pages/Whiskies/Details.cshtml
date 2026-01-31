@@ -131,6 +131,13 @@
                                     <div class="btn-group btn-group-sm">
                                         <a asp-page="./EditBottle" asp-route-id="@bottle.Id" class="btn btn-outline-primary" title="Edit Bottle">Edit</a>
                                         
+                                        @if (bottle.IsInfinityBottle)
+                                        {
+                                            <a asp-page="/Bottles/Infinity" asp-route-id="@bottle.Id" class="btn btn-info text-white" title="View Blend Composition">
+                                                Blend
+                                            </a>
+                                        }
+
                                         @if (bottle.Status == WhiskeyTracker.Web.Data.BottleStatus.Opened && !bottle.IsInfinityBottle)
                                         {
                                             @if (bottle.CurrentVolumeMl <= 150)
