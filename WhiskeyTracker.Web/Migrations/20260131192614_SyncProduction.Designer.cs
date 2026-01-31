@@ -12,7 +12,7 @@ using WhiskeyTracker.Web.Data;
 namespace WhiskeyTracker.Web.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260131191243_SyncProduction")]
+    [Migration("20260131192614_SyncProduction")]
     partial class SyncProduction
     {
         /// <inheritdoc />
