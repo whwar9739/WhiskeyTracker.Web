@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WhiskeyTracker.Web.Data;
 
-public class AppDbContext : IdentityDbContext, IDataProtectionKeyContext
+public class AppDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionKeyContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -13,6 +13,8 @@ public class AppDbContext : IdentityDbContext, IDataProtectionKeyContext
     public DbSet<TastingSession> TastingSessions { get; set; }
     public DbSet<TastingNote> TastingNotes { get; set; }
     public DbSet<BlendComponent> BlendComponents { get; set; }
+    public DbSet<Collection> Collections { get; set; }
+    public DbSet<CollectionMember> CollectionMembers { get; set; }
 
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 }

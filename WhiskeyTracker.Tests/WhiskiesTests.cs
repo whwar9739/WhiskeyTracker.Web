@@ -10,15 +10,9 @@ using Xunit;
 
 namespace WhiskeyTracker.Tests;
 
-public class WhiskiesTests
+public class WhiskiesTests : TestBase
 {
-    private AppDbContext GetInMemoryContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
-    }
+    // Helpers removed - inherited from TestBase
 
     // --- INDEX TESTS ---
     [Fact]
@@ -29,7 +23,11 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Name = "Macallan", Region = "Speyside" });
         await context.SaveChangesAsync();
 
-        var pageModel = new IndexModel(context);
+
+
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService);
+        SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
 
@@ -45,7 +43,11 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Name = "Balvenie", Distillery = "Balvenie" });
         await context.SaveChangesAsync();
 
-        var pageModel = new IndexModel(context) { SearchString = "Ard" };
+
+
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService) { SearchString = "Ard" };
+        SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
 
@@ -61,7 +63,11 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Name = "B", Region = "Speyside" });
         await context.SaveChangesAsync();
 
-        var pageModel = new IndexModel(context) { WhiskeyRegion = "Islay" };
+
+
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService) { WhiskeyRegion = "Islay" };
+        SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
 
@@ -148,7 +154,10 @@ public class WhiskiesTests
         context.Whiskies.Add(new Whiskey { Id = 1, Name = "Test" });
         await context.SaveChangesAsync();
 
+
+
         var pageModel = new DetailsModel(context);
+        SetMockUser(pageModel, "test-user");
         await pageModel.OnGetAsync(1);
 
         Assert.NotNull(pageModel.Whiskey);
@@ -293,6 +302,7 @@ public class WhiskiesTests
         await context.SaveChangesAsync();
         var mockEnv = new Mock<IWebHostEnvironment>();
         var pageModel = new EditModel(context, mockEnv.Object);
+        SetMockUser(pageModel, "test-user");
 
         // Act
         var result = await pageModel.OnGetAsync(1);

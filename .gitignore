@@ -6,6 +6,7 @@ TestResults/
 # --- IDE & Editor files ---
 .vs/
 .vscode/
+.idea/
 *.user
 *.suo
 *.userosscache
@@ -23,16 +24,22 @@ project.nuget.cache
 .DS_Store
 Thumbs.db
 
-# --- User Uploads (Optional) ---
-# Updated path: Now points explicitly to the Web project's wwwroot
-WhiskeyTracker.Web/wwwroot/images/*
-!WhiskeyTracker.Web/wwwroot/images/7b8447c6-93be-43e5-94c1-af67c96de5e1_stockWhiskeyBottle.jpg
-!WhiskeyTracker.Web/wwwroot/images/.gitkeep
-
-# --- Runtime & Logs ---
-*.log
-appsettings.Local.json
-
-# --- SSH Key ---
+# --- Secrets & Local Config (CRITICAL) ---
+# Ignore all SSH keys
 whiskey_key
 whiskey_key.pub
+# Ignore local environment settings (but keep appsettings.json and Development.json)
+appsettings.Local.json
+appsettings.LocalDocker.json
+# Ignore local scripts containing secrets
+Set-Secrets.ps1
+
+# --- Web Assets ---
+# Ignore user-uploaded images, but keep the folder structure and specific static assets
+WhiskeyTracker.Web/wwwroot/images/*
+!WhiskeyTracker.Web/wwwroot/images/.gitkeep
+# If you have a specific default image you want to track, uncomment the line below:
+# !WhiskeyTracker.Web/wwwroot/images/default-bottle.jpg
+
+# --- Logs ---
+*.log

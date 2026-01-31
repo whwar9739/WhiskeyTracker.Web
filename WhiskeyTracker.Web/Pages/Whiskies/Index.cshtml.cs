@@ -10,10 +10,12 @@ namespace WhiskeyTracker.Web.Pages.Whiskies;
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _context;
+    private readonly WhiskeyTracker.Web.Services.LegacyMigrationService _legacyMigrationService;
 
-    public IndexModel(AppDbContext context)
+    public IndexModel(AppDbContext context, WhiskeyTracker.Web.Services.LegacyMigrationService legacyMigrationService)
     {
         _context = context;
+        _legacyMigrationService = legacyMigrationService;
     }
 
     // This list will hold the data we fetch so the HTML can see it
@@ -27,12 +29,22 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        // --- 1. Runtime Migration: Ensure User has a Collection ---
+        if (!string.IsNullOrEmpty(userId))
+        {
+            await _legacyMigrationService.EnsureUserHasCollectionAsync(userId);
+        }
+        
         IQueryable<string> genreQuery = _context.Whiskies
                                         .OrderBy(w => w.Region)
                                         .Select(w => w.Region)
                                         .Distinct();
         Regions = new SelectList(await genreQuery.ToListAsync());
 
+        // Show Whiskies that exist in the DB.
+        // Option: Filter to only show whiskies I have? No, library mode usually shows all reference data.
         var whiskies = from w in _context.Whiskies
                        select w;
 
