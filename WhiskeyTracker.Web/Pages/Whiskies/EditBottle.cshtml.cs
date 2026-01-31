@@ -48,6 +48,8 @@ public class EditBottleModel : PageModel
         
         if (!canAccess) return NotFound();
 
+        if (userId == null) return Challenge();
+
         // Populate Lists via Service
         var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, bottle.CollectionId, bottle.UserId);
         Collections = dropdowns.Collections;

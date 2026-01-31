@@ -16,47 +16,10 @@ public class LegacyMigrationService
     {
         if (string.IsNullOrEmpty(userId)) return;
 
-        // 1. Ensure User has a Collection
-        var hasCollection = await _context.CollectionMembers.AnyAsync(m => m.UserId == userId);
-        if (!hasCollection)
-        {
-            // Create Default Collection
-            var personalCollection = new Collection { Name = "My Home Bar" };
-            _context.Collections.Add(personalCollection);
-            await _context.SaveChangesAsync();
-
-            _context.CollectionMembers.Add(new CollectionMember
-            {
-                CollectionId = personalCollection.Id,
-                UserId = userId,
-                Role = CollectionRole.Owner
-            });
-            await _context.SaveChangesAsync();
-        }
-
-        // 2. Adopt Orphan Bottles
-        // Optimization: Only check for orphans if we suspect migration is needed.
-        // For now, we'll keep the check but it's isolated.
-        var orphanBottles = await _context.Bottles
-            .Where(b => b.UserId == userId && b.CollectionId == null)
-            .ToListAsync();
-
-        if (orphanBottles.Any())
-        {
-            var member = await _context.CollectionMembers
-                .Where(m => m.UserId == userId)
-                .OrderBy(m => m.Id)
-                .FirstOrDefaultAsync();
-            var myCollectionId = member?.CollectionId ?? 0;
-
-            if (myCollectionId != 0)
-            {
-                foreach (var orphan in orphanBottles)
-                {
-                    orphan.CollectionId = myCollectionId;
-                }
-                await _context.SaveChangesAsync();
-            }
-        }
+        // Optimization: We now create the default collection at Registration time.
+        // We no longer check for it on every request.
+        
+        // Use this only if we need a manual "Fix My Account" button or similar.
+        // For the hot path, this is now a no-op or removed.
     }
 }

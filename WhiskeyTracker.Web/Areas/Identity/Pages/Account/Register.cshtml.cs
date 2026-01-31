@@ -30,13 +30,15 @@ namespace WhiskeyTracker.Web.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly AppDbContext _context;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            AppDbContext context)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -44,6 +46,7 @@ namespace WhiskeyTracker.Web.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _context = context;
         }
 
         /// <summary>
@@ -128,6 +131,19 @@ namespace WhiskeyTracker.Web.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
+
+                    // Default Collection Creation
+                    var defaultCollection = new Collection { Name = "My Home Bar" };
+                    _context.Collections.Add(defaultCollection);
+                    await _context.SaveChangesAsync();
+
+                    _context.CollectionMembers.Add(new CollectionMember
+                    {
+                        CollectionId = defaultCollection.Id,
+                        UserId = user.Id,
+                        Role = CollectionRole.Owner
+                    });
+                    await _context.SaveChangesAsync();
 
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
