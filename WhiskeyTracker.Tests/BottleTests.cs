@@ -7,32 +7,9 @@ using WhiskeyTracker.Web.Pages.Whiskies;
 
 namespace WhiskeyTracker.Tests;
 
-public class BottleTests
+public class BottleTests : TestBase
 {
-    private AppDbContext GetInMemoryContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
-    }
-
-    private Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> GetMockUserManager(AppDbContext context)
-    {
-        var store = new Mock<Microsoft.AspNetCore.Identity.IUserStore<ApplicationUser>>();
-        var mockUserManager = new Mock<Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>>(
-            store.Object, null, null, null, null, null, null, null, null);
-        
-        // Setup GetUserId to return the user ID from claims
-        mockUserManager.Setup(um => um.GetUserId(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))
-            .Returns<System.Security.Claims.ClaimsPrincipal>(principal => 
-                principal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-        
-        // Setup Users property to return the context's Users DbSet
-        mockUserManager.Setup(um => um.Users).Returns(context.Users);
-        
-        return mockUserManager.Object;
-    }
+    // Helpers removed - inherited from TestBase
 
     [Fact]
     public async Task AddBottle_PopulatesDefaults_OnGet()
@@ -58,8 +35,10 @@ public class BottleTests
 
         var fixedTime = new DateTimeOffset(2015, 10, 21, 0, 0, 0, TimeSpan.Zero);
         var fakeTime = new FakeTimeProvider(fixedTime);
+        var userManager = GetMockUserManager(context);
+        var collectionService = new WhiskeyTracker.Web.Services.CollectionViewModelService(context, userManager);
 
-        var pageModel = new AddBottleModel(context, fakeTime, GetMockUserManager(context));
+        var pageModel = new AddBottleModel(context, fakeTime, userManager, collectionService);
         SetMockUser(pageModel, "test-user-id");
 
         // 2. ACT
@@ -103,7 +82,10 @@ public class BottleTests
         await context.SaveChangesAsync();
 
         // Use FakeTimeProvider with any date, since this test doesn't check the date
-        var pageModel = new AddBottleModel(context, new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)), GetMockUserManager(context))
+        var userManager = GetMockUserManager(context);
+        var collectionService = new WhiskeyTracker.Web.Services.CollectionViewModelService(context, userManager);
+        
+        var pageModel = new AddBottleModel(context, new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero)), userManager, collectionService)
         {
             NewBottle = new Bottle { WhiskeyId = 1, PurchaseDate = null }
         };
@@ -145,7 +127,10 @@ public class BottleTests
 
         context.ChangeTracker.Clear();
 
-        var pageModel = new EditBottleModel(context, GetMockUserManager(context))
+        var userManager = GetMockUserManager(context);
+        var collectionService = new WhiskeyTracker.Web.Services.CollectionViewModelService(context, userManager);
+
+        var pageModel = new EditBottleModel(context, userManager, collectionService)
         {
             Bottle = new Bottle { Id = 10, WhiskeyId = 1, Status = BottleStatus.Opened, CollectionId = 1, UserId = "test-user" }
         };
@@ -165,7 +150,10 @@ public class BottleTests
         using var context = GetInMemoryContext();
         // Database is empty (simulating someone else deleted the bottle)
 
-        var pageModel = new EditBottleModel(context, GetMockUserManager(context))
+        var userManager = GetMockUserManager(context);
+        var collectionService = new WhiskeyTracker.Web.Services.CollectionViewModelService(context, userManager);
+
+        var pageModel = new EditBottleModel(context, userManager, collectionService)
         {
             Bottle = new Bottle { Id = 999 }
         };

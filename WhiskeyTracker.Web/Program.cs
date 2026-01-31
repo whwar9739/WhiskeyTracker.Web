@@ -21,6 +21,9 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToFolder("/.well-known");
 });
 
+builder.Services.AddScoped<WhiskeyTracker.Web.Services.CollectionViewModelService>();
+builder.Services.AddScoped<WhiskeyTracker.Web.Services.LegacyMigrationService>();
+
 // ---------------------------------------------------------
 // 1. DATABASE CONFIGURATION (The Switchboard)
 // ---------------------------------------------------------

@@ -12,12 +12,14 @@ public class AddBottleModel : PageModel
     private readonly AppDbContext _context;
     private readonly TimeProvider _timeProvider;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly WhiskeyTracker.Web.Services.CollectionViewModelService _collectionViewModelService;
 
-    public AddBottleModel(AppDbContext context, TimeProvider timeProvider, UserManager<ApplicationUser> userManager)
+    public AddBottleModel(AppDbContext context, TimeProvider timeProvider, UserManager<ApplicationUser> userManager, WhiskeyTracker.Web.Services.CollectionViewModelService collectionViewModelService)
     {
         _context = context;
         _timeProvider = timeProvider;
         _userManager = userManager;
+        _collectionViewModelService = collectionViewModelService;
     }
 
     [BindProperty]
@@ -36,38 +38,12 @@ public class AddBottleModel : PageModel
         WhiskeyName = whiskey.Name;
         
         var userId = _userManager.GetUserId(User);
+        if (userId == null) return Challenge();
 
-        // 1. Get My Collections
-        var myMemberships = await _context.CollectionMembers
-            .Include(m => m.Collection)
-            .Where(m => m.UserId == userId)
-            .ToListAsync();
-            
-        Collections = new SelectList(myMemberships.Select(m => m.Collection), "Id", "Name");
-
-        // 2. Get Potential Purchasers (All members of my collections)
-        // Note: For now, we'll fetch all unique users involved in my collections
-        var myCollectionIds = myMemberships.Select(m => m.CollectionId).ToList();
-
-        var allMemberUserIds = await _context.CollectionMembers
-            .Where(m => myCollectionIds.Contains(m.CollectionId))
-            .Select(m => m.UserId)
-            .Distinct()
-            .ToListAsync();
-
-        var users = await _userManager.Users
-            .Where(u => allMemberUserIds.Contains(u.Id))
-            .ToListAsync();
-        
-        // Format names nicely
-        var purchaserList = users.Select(u => new 
-        { 
-            Id = u.Id, 
-            Name = string.IsNullOrEmpty(u.DisplayName) ? u.UserName : u.DisplayName 
-        }).ToList();
-
-        Purchasers = new SelectList(purchaserList, "Id", "Name", userId);
-
+        // Populate Dropdowns via Service
+        var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId);
+        Collections = dropdowns.Collections;
+        Purchasers = dropdowns.Purchasers;
         
         // Use our Test-Friendly TimeProvider
         var today = DateOnly.FromDateTime(_timeProvider.GetLocalNow().DateTime);
@@ -80,7 +56,7 @@ public class AddBottleModel : PageModel
             CapacityMl = 750,      // Default standard bottle
             CurrentVolumeMl = 750,  // Default to full
             UserId = userId,        // Default purchaser is me
-            CollectionId = myMemberships.FirstOrDefault()?.CollectionId // Default to first collection
+            CollectionId = (int?)Collections.SelectedValue // Default to first collection
         };
 
         return Page();
@@ -97,29 +73,11 @@ public class AddBottleModel : PageModel
         {
             // Reload lists if validation fails
              var userId = _userManager.GetUserId(User);
-             var myMemberships = await _context.CollectionMembers
-                .Include(m => m.Collection)
-                .Where(m => m.UserId == userId)
-                .ToListAsync();
-            Collections = new SelectList(myMemberships.Select(m => m.Collection), "Id", "Name");
-            
-            var myCollectionIds = myMemberships.Select(m => m.CollectionId).ToList();
-             var allMemberUserIds = await _context.CollectionMembers
-                .Where(m => myCollectionIds.Contains(m.CollectionId))
-                .Select(m => m.UserId)
-                .Distinct()
-                .ToListAsync();
-            var users = await _userManager.Users
-                .Where(u => allMemberUserIds.Contains(u.Id))
-                .ToListAsync();
-            var purchaserList = users.Select(u => new 
-            { 
-                Id = u.Id, 
-                Name = string.IsNullOrEmpty(u.DisplayName) ? u.UserName : u.DisplayName 
-            }).ToList();
-            Purchasers = new SelectList(purchaserList, "Id", "Name", NewBottle.UserId);
+             var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, NewBottle.CollectionId, NewBottle.UserId);
+             Collections = dropdowns.Collections;
+             Purchasers = dropdowns.Purchasers;
 
-            return Page();
+             return Page();
         }
 
         // Verify Access to Collection
@@ -130,6 +88,11 @@ public class AddBottleModel : PageModel
         if (!access)
         {
              ModelState.AddModelError("", "You do not have access to add bottles to this collection.");
+             // Reload lists even on manual error
+             var userId = _userManager.GetUserId(User);
+             var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, NewBottle.CollectionId, NewBottle.UserId);
+             Collections = dropdowns.Collections;
+             Purchasers = dropdowns.Purchasers;
              return Page();
         }
 

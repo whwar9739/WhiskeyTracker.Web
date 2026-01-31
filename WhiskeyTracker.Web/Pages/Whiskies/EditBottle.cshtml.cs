@@ -11,11 +11,13 @@ public class EditBottleModel : PageModel
 {
     private readonly AppDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly WhiskeyTracker.Web.Services.CollectionViewModelService _collectionViewModelService;
 
-    public EditBottleModel(AppDbContext context, UserManager<ApplicationUser> userManager)
+    public EditBottleModel(AppDbContext context, UserManager<ApplicationUser> userManager, WhiskeyTracker.Web.Services.CollectionViewModelService collectionViewModelService)
     {
         _context = context;
         _userManager = userManager;
+        _collectionViewModelService = collectionViewModelService;
         Collections = new SelectList(new List<Collection>(), "Id", "Name");
         Purchasers = new SelectList(new List<object>(), "Id", "Name");
     }
@@ -39,37 +41,17 @@ public class EditBottleModel : PageModel
 
         if (bottle == null) return NotFound();
 
-        // 1. Get My Collections
-        var myMemberships = await _context.CollectionMembers
-            .Include(m => m.Collection)
-            .Where(m => m.UserId == userId)
-            .ToListAsync();
+        // 1. Get My Collections to check access
+        // We can do a quick check first
+        var canAccess = await _context.CollectionMembers
+            .AnyAsync(m => m.UserId == userId && m.CollectionId == bottle.CollectionId);
         
-        // Security: Check Collection Access (Must be in valid collection currently)
-        var canAccess = myMemberships.Any(m => m.CollectionId == bottle.CollectionId);
         if (!canAccess) return NotFound();
 
-        // Populate Lists
-        Collections = new SelectList(myMemberships.Select(m => m.Collection), "Id", "Name", bottle.CollectionId);
-
-        var myCollectionIds = myMemberships.Select(m => m.CollectionId).ToList();
-        var allMemberUserIds = await _context.CollectionMembers
-            .Where(m => myCollectionIds.Contains(m.CollectionId))
-            .Select(m => m.UserId)
-            .Distinct()
-            .ToListAsync();
-
-        var users = await _userManager.Users
-            .Where(u => allMemberUserIds.Contains(u.Id))
-            .ToListAsync();
-        
-        var purchaserList = users.Select(u => new 
-        { 
-            Id = u.Id, 
-            Name = string.IsNullOrEmpty(u.DisplayName) ? u.UserName : u.DisplayName 
-        }).ToList();
-
-        Purchasers = new SelectList(purchaserList, "Id", "Name", bottle.UserId);
+        // Populate Lists via Service
+        var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, bottle.CollectionId, bottle.UserId);
+        Collections = dropdowns.Collections;
+        Purchasers = dropdowns.Purchasers;
 
         Bottle = bottle;
         if (bottle.Whiskey != null)
@@ -88,27 +70,9 @@ public class EditBottleModel : PageModel
         {
             // Reload Lists
              var userId = _userManager.GetUserId(User);
-             var myMemberships = await _context.CollectionMembers
-                .Include(m => m.Collection)
-                .Where(m => m.UserId == userId)
-                .ToListAsync();
-            Collections = new SelectList(myMemberships.Select(m => m.Collection), "Id", "Name", Bottle.CollectionId);
-            
-            var myCollectionIds = myMemberships.Select(m => m.CollectionId).ToList();
-             var allMemberUserIds = await _context.CollectionMembers
-                .Where(m => myCollectionIds.Contains(m.CollectionId))
-                .Select(m => m.UserId)
-                .Distinct()
-                .ToListAsync();
-            var users = await _userManager.Users
-                .Where(u => allMemberUserIds.Contains(u.Id))
-                .ToListAsync();
-            var purchaserList = users.Select(u => new 
-            { 
-                Id = u.Id, 
-                Name = string.IsNullOrEmpty(u.DisplayName) ? u.UserName : u.DisplayName 
-            }).ToList();
-            Purchasers = new SelectList(purchaserList, "Id", "Name", Bottle.UserId);
+             var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, Bottle.CollectionId, Bottle.UserId);
+             Collections = dropdowns.Collections;
+             Purchasers = dropdowns.Purchasers;
             
             return Page();
         }
@@ -130,14 +94,17 @@ public class EditBottleModel : PageModel
              if (!canAccessNew)
              {
                  ModelState.AddModelError("", "You do not have access to move the bottle to this collection.");
+                 // Reload Lists
+                 var userId = _userManager.GetUserId(User);
+                 var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, Bottle.CollectionId, Bottle.UserId);
+                 Collections = dropdowns.Collections;
+                 Purchasers = dropdowns.Purchasers;
                  return Page();
              }
         }
 
         _context.Attach(Bottle).State = EntityState.Modified;
         
-        // Prevent accidental property modification if needed, but here we bind what we want.
-
         try
         {
             await _context.SaveChangesAsync();

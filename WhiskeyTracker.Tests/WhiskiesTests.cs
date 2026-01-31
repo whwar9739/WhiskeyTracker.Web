@@ -10,40 +10,9 @@ using Xunit;
 
 namespace WhiskeyTracker.Tests;
 
-public class WhiskiesTests
+public class WhiskiesTests : TestBase
 {
-    private AppDbContext GetInMemoryContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
-    }
-
-    private Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> GetMockUserManager()
-    {
-        var store = new Mock<Microsoft.AspNetCore.Identity.IUserStore<ApplicationUser>>();
-        return new Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>(
-            store.Object, null, null, null, null, null, null, null, null);
-    }
-
-    private void SetMockUser(PageModel page, string userId)
-    {
-        var claims = new List<System.Security.Claims.Claim>
-        {
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
-        };
-        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
-        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
-
-        page.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext
-        {
-            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
-            {
-                User = claimsPrincipal
-            }
-        };
-    }
+    // Helpers removed - inherited from TestBase
 
     // --- INDEX TESTS ---
     [Fact]
@@ -56,7 +25,8 @@ public class WhiskiesTests
 
 
 
-        var pageModel = new IndexModel(context);
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService);
         SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
@@ -75,7 +45,8 @@ public class WhiskiesTests
 
 
 
-        var pageModel = new IndexModel(context) { SearchString = "Ard" };
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService) { SearchString = "Ard" };
         SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();
@@ -94,7 +65,8 @@ public class WhiskiesTests
 
 
 
-        var pageModel = new IndexModel(context) { WhiskeyRegion = "Islay" };
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService) { WhiskeyRegion = "Islay" };
         SetMockUser(pageModel, "test-user");
 
         await pageModel.OnGetAsync();

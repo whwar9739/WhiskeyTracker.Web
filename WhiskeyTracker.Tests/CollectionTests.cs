@@ -6,40 +6,9 @@ using Xunit;
 
 namespace WhiskeyTracker.Tests;
 
-public class CollectionTests
+public class CollectionTests : TestBase
 {
-    private AppDbContext GetInMemoryContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
-    }
-
-    private Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> GetMockUserManager()
-    {
-        var store = new Moq.Mock<Microsoft.AspNetCore.Identity.IUserStore<ApplicationUser>>();
-        return new Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>(
-            store.Object, null, null, null, null, null, null, null, null);
-    }
-
-    private void SetMockUser(PageModel page, string userId)
-    {
-        var claims = new List<System.Security.Claims.Claim>
-        {
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
-        };
-        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
-        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
-
-        page.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext
-        {
-            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
-            {
-                User = claimsPrincipal
-            }
-        };
-    }
+    // Helpers removed - inherited from TestBase
 
     [Fact]
     public async Task Index_RuntimeMigration_CreatesDefaultCollection_ForNewUser()
@@ -48,7 +17,8 @@ public class CollectionTests
         using var context = GetInMemoryContext();
         var userId = "new-user-123";
 
-        var pageModel = new IndexModel(context);
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService);
         SetMockUser(pageModel, userId);
 
         // 2. ACT
@@ -81,7 +51,8 @@ public class CollectionTests
         context.Bottles.Add(new Bottle { Id = 999, WhiskeyId = 1, UserId = "other-user", CollectionId = null });
         await context.SaveChangesAsync();
 
-        var pageModel = new IndexModel(context);
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
+        var pageModel = new IndexModel(context, legacyService);
         SetMockUser(pageModel, userId);
 
         // 2. ACT
@@ -125,11 +96,10 @@ public class CollectionTests
         context.Bottles.Add(new Bottle { Id = 200, WhiskeyId = 1, CollectionId = 20 });
         
         await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
-
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
 
+        var legacyService = new WhiskeyTracker.Web.Services.LegacyMigrationService(context);
         var pageModel = new DetailsModel(context);
         SetMockUser(pageModel, userId);
 

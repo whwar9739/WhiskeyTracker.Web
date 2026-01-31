@@ -10,10 +10,12 @@ namespace WhiskeyTracker.Web.Pages.Whiskies;
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _context;
+    private readonly WhiskeyTracker.Web.Services.LegacyMigrationService _legacyMigrationService;
 
-    public IndexModel(AppDbContext context)
+    public IndexModel(AppDbContext context, WhiskeyTracker.Web.Services.LegacyMigrationService legacyMigrationService)
     {
         _context = context;
+        _legacyMigrationService = legacyMigrationService;
     }
 
     // This list will hold the data we fetch so the HTML can see it
@@ -32,44 +34,7 @@ public class IndexModel : PageModel
         // --- 1. Runtime Migration: Ensure User has a Collection ---
         if (!string.IsNullOrEmpty(userId))
         {
-            var hasCollection = await _context.CollectionMembers.AnyAsync(m => m.UserId == userId);
-            if (!hasCollection)
-            {
-                // Create Default Collection
-                var personalCollection = new Collection { Name = "My Home Bar" };
-                _context.Collections.Add(personalCollection);
-                await _context.SaveChangesAsync();
-
-                _context.CollectionMembers.Add(new CollectionMember
-                {
-                    CollectionId = personalCollection.Id,
-                    UserId = userId,
-                    Role = CollectionRole.Owner
-                });
-                await _context.SaveChangesAsync();
-            }
-
-            // --- 2. Runtime Migration: Adopt Orphan Bottles ---
-            var orphanBottles = await _context.Bottles
-                .Where(b => b.UserId == userId && b.CollectionId == null)
-                .ToListAsync();
-
-            if (orphanBottles.Any())
-            {
-                // Assign to their first collection
-                // Assign to their first collection
-                var member = await _context.CollectionMembers
-                    .Where(m => m.UserId == userId)
-                    .OrderBy(m => m.Id)
-                    .FirstOrDefaultAsync();
-                var myCollectionId = member?.CollectionId ?? 0;
-
-                foreach (var orphan in orphanBottles)
-                {
-                    orphan.CollectionId = myCollectionId;
-                }
-                await _context.SaveChangesAsync();
-            }
+            await _legacyMigrationService.EnsureUserHasCollectionAsync(userId);
         }
         
         IQueryable<string> genreQuery = _context.Whiskies
