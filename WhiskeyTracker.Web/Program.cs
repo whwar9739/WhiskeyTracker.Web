@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using WhiskeyTracker.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -57,7 +58,10 @@ switch (provider?.ToLower())
     case "postgres":
     case "postgresql":
         builder.Services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+        {
+            options.UseNpgsql(connectionString);
+            options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+        });
         break;
     default:
         // Default to In-Memory if config is missing or set to InMemory
