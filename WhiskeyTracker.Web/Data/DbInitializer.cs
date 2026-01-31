@@ -167,5 +167,43 @@ public static class DbInitializer
 
         context.Bottles.AddRange(bottle, infinity, officeBottle);
         await context.SaveChangesAsync();
+
+        // Add pours to the infinity bottle
+        var blend1 = new BlendComponent
+        {
+            SourceBottleId = bottle.Id,
+            InfinityBottleId = infinity.Id,
+            AmountAddedMl = 50,
+            DateAdded = DateOnly.FromDateTime(DateTime.Now.AddDays(-10))
+        };
+        
+        // Let's pretend there was another bottle that is now empty/gone but part of the blend
+        var oldBottle = new Bottle
+        {
+            WhiskeyId = whiskies[2].Id, // Redbreast
+            UserId = user.Id,
+            CollectionId = personalCollection.Id,
+            Status = BottleStatus.Empty,
+            CapacityMl = 700,
+            CurrentVolumeMl = 0,
+            PurchaseDate = DateOnly.FromDateTime(DateTime.Now.AddMonths(-6))
+        };
+        context.Bottles.Add(oldBottle);
+        await context.SaveChangesAsync();
+
+        var blend2 = new BlendComponent
+        {
+            SourceBottleId = oldBottle.Id,
+            InfinityBottleId = infinity.Id,
+            AmountAddedMl = 100,
+            DateAdded = DateOnly.FromDateTime(DateTime.Now.AddDays(-5))
+        };
+
+        context.BlendComponents.AddRange(blend1, blend2);
+        
+        // Update infinity bottle volume
+        infinity.CurrentVolumeMl += 150;
+        
+        await context.SaveChangesAsync();
     }
 }

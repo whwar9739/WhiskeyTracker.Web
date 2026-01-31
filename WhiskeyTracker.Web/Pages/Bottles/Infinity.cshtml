@@ -1,0 +1,104 @@
+@page "{id:int}"
+@model WhiskeyTracker.Web.Pages.Bottles.InfinityModel
+@{
+    ViewData["Title"] = "Infinity Bottle Blend";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-6"><span class="text-primary">♾️</span> Infinity Blend</h1>
+            <p class="lead text-muted">@Model.Bottle.Whiskey.Name</p>
+        </div>
+        <a asp-page="/Whiskies/Details" asp-route-id="@Model.Bottle.WhiskeyId" class="btn btn-outline-secondary">
+            &larr; Back to Bottle
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Stats Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    @if (!string.IsNullOrEmpty(Model.Bottle.Whiskey.ImageFileName))
+                    {
+                        <img src="~/images/@Model.Bottle.Whiskey.ImageFileName" class="img-fluid rounded mb-3" style="max-height: 200px;" alt="Bottle Image" />
+                    }
+                    <h5 class="card-title">Current Status</h5>
+                    <div class="display-4 my-3">
+                         @Model.Bottle.CurrentVolumeMl <span class="fs-4 text-muted">ml</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 10px;">
+                         @{
+                             var percent = (double)Model.Bottle.CurrentVolumeMl / Model.Bottle.CapacityMl * 100;
+                             var colorClass = percent < 10 ? "bg-danger" : percent < 30 ? "bg-warning" : "bg-success";
+                         }
+                        <div class="progress-bar @colorClass" role="progressbar" style="width: @percent%"></div>
+                    </div>
+                    <small class="text-muted">of @Model.Bottle.CapacityMl ml capacity</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Composition History -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Blend Composition</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.BlendComponents.Count == 0)
+                    {
+                        <div class="text-center p-5 text-muted">
+                            <i class="bi bi-droplet-half display-4"></i>
+                            <p class="mt-3">The infinity bottle is awaiting its first pour!</p>
+                            <a asp-page="/Whiskies/Index" class="btn btn-primary btn-sm mt-2">Go Pour Something</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var component in Model.BlendComponents)
+                            {
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded-circle p-2 me-3 text-center" style="width: 48px; height: 48px;">
+                                                <i class="bi bi-arrow-down-right text-success fs-5"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">
+                                                    @if (component.SourceBottle != null)
+                                                    {
+                                                        <a asp-page="/Whiskies/Details" asp-route-id="@component.SourceBottle.WhiskeyId" class="text-decoration-none text-dark">
+                                                            @component.SourceBottle.Whiskey.Name
+                                                        </a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Unknown Source</span>
+                                                    }
+                                                </h6>
+                                                <small class="text-muted">
+                                                    @if (component.SourceBottle?.Whiskey != null)
+                                                    {
+                                                        @component.SourceBottle.Whiskey.Distillery 
+                                                        @if(!string.IsNullOrEmpty(component.SourceBottle.Whiskey.Region)) { <span>&bull; @component.SourceBottle.Whiskey.Region</span> }
+                                                    }
+                                                </small>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold text-success">+@component.AmountAddedMl ml</div>
+                                            <small class="text-muted">@component.DateAdded.ToShortDateString()</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
