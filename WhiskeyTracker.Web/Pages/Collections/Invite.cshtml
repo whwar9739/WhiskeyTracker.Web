@@ -1,0 +1,44 @@
+@page "{id:int}"
+@model WhiskeyTracker.Web.Pages.Collections.InviteModel
+@{
+    ViewData["Title"] = "Invite to Collection";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Invite to @Model.CollectionName</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                        
+                        <div class="form-group mb-3">
+                            <label asp-for="Input.Email" class="control-label">Invitee Email Address</label>
+                            <input asp-for="Input.Email" class="form-control" placeholder="user@example.com" />
+                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                            <small class="form-text text-muted">The user must have an account with this email to accept the invitation.</small>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label asp-for="Input.Role" class="control-label">Proposed Role</label>
+                            <select asp-for="Input.Role" class="form-select" asp-items="Html.GetEnumSelectList<WhiskeyTracker.Web.Data.CollectionRole>()"></select>
+                            <span asp-validation-for="Input.Role" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-page="./Details" asp-route-id="@RouteData.Values["id"]" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success">Send Invitation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
