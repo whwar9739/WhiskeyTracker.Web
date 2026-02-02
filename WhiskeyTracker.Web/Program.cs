@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using WhiskeyTracker.Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -111,13 +112,10 @@ using (var scope = app.Services.CreateScope())
     // Initialize roles and admin setup (always run)
     // Only seed broad data if the configuration explicitly says 'true'
     bool seedSampleData = dbSection.GetValue<bool>("SeedOnStartup");
-    
-    if (seedSampleData)
-    {
-        Console.WriteLine("--> Seeding Sample Data...");
-    }
 
-    await DbInitializer.Initialize(context, userManager, roleManager, builder.Configuration, seedSampleData);
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    await DbInitializer.Initialize(context, userManager, roleManager, builder.Configuration, seedSampleData, logger);
 }
 
 

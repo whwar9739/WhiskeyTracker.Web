@@ -31,18 +31,37 @@ public class UsersModel : PageModel
 
     public async Task OnGetAsync()
     {
+        // Resolve N+1 issue: Fetch all users in Admin role first
+        // 1. Get the admin role ID
         var adminRole = await _roleManager.FindByNameAsync("Admin");
         var adminRoleId = adminRole?.Id;
 
+        // 2. Get all UserIDs that have this role
+        var adminUserIds = new HashSet<string>();
+        if (adminRoleId != null)
+        {
+            var adminUserIdsList = await _context.UserRoles
+                .Where(ur => ur.RoleId == adminRoleId)
+                .Select(ur => ur.UserId)
+                .ToListAsync();
+            adminUserIds = new HashSet<string>(adminUserIdsList);
+        }
+
+        // 3. Fetch users and map, checking against the HashSet
         Users = await _context.Users
             .Select(u => new UserViewModel
             {
                 Id = u.Id,
                 Email = u.Email,
                 DisplayName = u.DisplayName,
-                IsAdmin = adminRoleId != null && _context.Set<IdentityUserRole<string>>().Any(ur => ur.UserId == u.Id && ur.RoleId == adminRoleId)
+                IsAdmin = false // Placeholder, set in memory below to avoid complexity in LINQ translation if not needed
             })
             .ToListAsync();
+
+        foreach (var u in Users)
+        {
+            u.IsAdmin = adminUserIds.Contains(u.Id);
+        }
     }
 
     public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
@@ -89,29 +108,34 @@ public class UsersModel : PageModel
         var sessions = await _context.TastingSessions.Where(s => s.UserId == userId).ToListAsync();
         _context.TastingSessions.RemoveRange(sessions);
 
-        var notes = await _context.TastingNotes.Where(n => n.UserId == userId).ToListAsync();
-        _context.TastingNotes.RemoveRange(notes);
+        // Optimizing cleanup:
+        // We need to delete notes that are either BY the user OR attached to bottles OF the user.
+        
+        // 1. Delete all notes BY the user
+        var userNotes = await _context.TastingNotes.Where(n => n.UserId == userId).ToListAsync();
+        _context.TastingNotes.RemoveRange(userNotes);
 
-        // Cleanup: Bottles and their dependencies
+        // 2. Fetch bottles owned by user
         var bottles = await _context.Bottles.Where(b => b.UserId == userId).ToListAsync();
-        
-        // Use bottle IDs to find related blend components (source or infinity)
         var bottleIds = bottles.Select(b => b.Id).ToList();
-        var blendComponents = await _context.BlendComponents
-            .Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId))
-            .ToListAsync();
-        _context.BlendComponents.RemoveRange(blendComponents);
-        
-        // Remove associated tasting notes for these bottles (even if written by others? 
-        // Logic check: If bottle is gone, note is orphaned. Yes.)
-        var bottleNotes = await _context.TastingNotes.Where(n => n.BottleId != null && bottleIds.Contains(n.BottleId.Value)).ToListAsync();
-        // Avoid duplicate tracking if we already removed them above via UserId
-        foreach (var bn in bottleNotes)
+
+        // 3. Cleanup BlendComponents involving these bottles
+        if (bottleIds.Any())
         {
-            if (!_context.Entry(bn).State.Equals(EntityState.Deleted))
-            {
-                 _context.TastingNotes.Remove(bn);
-            }
+            var blendComponents = await _context.BlendComponents
+                .Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId))
+                .ToListAsync();
+            _context.BlendComponents.RemoveRange(blendComponents);
+
+            // 4. Identify remaining notes tied to bottles being deleted (that weren't just deleted as user notes)
+            var userNoteIds = userNotes.Select(un => un.Id).ToHashSet();
+
+            var bottleNotes = await _context.TastingNotes
+                .Where(n => n.BottleId != null && bottleIds.Contains(n.BottleId.Value))
+                .ToListAsync();
+                
+            var notesToDelete = bottleNotes.Where(bn => !userNoteIds.Contains(bn.Id)).ToList();
+            _context.TastingNotes.RemoveRange(notesToDelete);
         }
 
         _context.Bottles.RemoveRange(bottles);

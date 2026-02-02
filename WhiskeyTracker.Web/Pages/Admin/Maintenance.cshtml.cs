@@ -30,29 +30,28 @@ public class MaintenanceModel : PageModel
 
     private IQueryable<Bottle> GetOrphanedBottles()
     {
+        // Using Navigation Properties to find orphans (Foreign Key is set, but Related Entity is null)
         return _context.Bottles
-            .Where(b => (b.CollectionId.HasValue && !_context.Collections.Any(c => c.Id == b.CollectionId.Value)) ||
-                        (!string.IsNullOrEmpty(b.UserId) && !_context.Users.Any(u => u.Id == b.UserId)));
+            .Where(b => (b.CollectionId.HasValue && b.Collection == null) ||
+                        (b.UserId != null && b.Purchaser == null));
     }
 
     private IQueryable<CollectionMember> GetOrphanedMembers()
     {
         return _context.CollectionMembers
-            .Where(m => !_context.Users.Any(u => u.Id == m.UserId) || 
-                        !_context.Collections.Any(c => c.Id == m.CollectionId));
+            .Where(m => m.User == null || m.Collection == null);
     }
 
     private IQueryable<TastingNote> GetOrphanedNotes()
     {
         return _context.TastingNotes
-            .Where(n => n.BottleId.HasValue && !_context.Bottles.Any(b => b.Id == n.BottleId.Value));
+            .Where(n => n.BottleId.HasValue && n.Bottle == null);
     }
 
     private IQueryable<BlendComponent> GetOrphanedBlends()
     {
         return _context.BlendComponents
-            .Where(bc => !_context.Bottles.Any(b => b.Id == bc.SourceBottleId) || 
-                         !_context.Bottles.Any(b => b.Id == bc.InfinityBottleId));
+            .Where(bc => bc.SourceBottle == null || bc.InfinityBottle == null);
     }
 
     private async Task ScanForOrphans()

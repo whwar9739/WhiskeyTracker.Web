@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using WhiskeyTracker.Web.Data;
 
 namespace WhiskeyTracker.Web.Data;
 
 public static class DbInitializer
 {
-    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, bool seedSampleData)
+    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, bool seedSampleData, ILogger logger)
     {
         // 1. Ensure the DB exists
         context.Database.EnsureCreated();
@@ -31,7 +32,7 @@ public static class DbInitializer
                 if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
                 {
                     await userManager.AddToRoleAsync(adminUser, "Admin");
-                    Console.WriteLine($"--> Assigned Admin role to: {adminEmail}");
+                    logger.LogInformation("--> Assigned Admin role to: {AdminEmail}", adminEmail);
                 }
             }
         }
@@ -82,17 +83,19 @@ public static class DbInitializer
             return;   // DB has been seeded
         }
 
+        logger.LogInformation("--> Seeding Sample Data...");
+
         // 4. Add Seed Data
         var whiskies = new Whiskey[]
         {
             new Whiskey 
             { 
-                 Name = "Buffalo Trace", 
-                 Distillery = "Buffalo Trace", 
-                 Region = "Kentucky", 
-                 Type = "Bourbon", 
-                 ABV = 45,
-                 GeneralNotes = "A solid daily drinker. Notes of vanilla, caramel, and a hint of spice."
+                Name = "Buffalo Trace", 
+                Distillery = "Buffalo Trace", 
+                Region = "Kentucky", 
+                Type = "Bourbon", 
+                ABV = 45,
+                GeneralNotes = "A solid daily drinker. Notes of vanilla, caramel, and a hint of spice."
             },
             new Whiskey 
             { 
