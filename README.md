@@ -80,6 +80,7 @@ Follow these instructions to get the project running on your local machine.
 * **Admin Dashboard:** Add an admin dashboard to manage users and collections.
 * **Mobile App:** Add a mobile app to access the collection.
 * **API:** Add an API to access the collection.
+* **Clean Build Warnings:** Fix all build warnings.
 
 ## 🤝 Contributing
 

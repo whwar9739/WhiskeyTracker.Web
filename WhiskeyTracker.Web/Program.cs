@@ -16,25 +16,27 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestHeaderCount = 200; // Allow more headers
 });
 
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
+
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");
+    options.Conventions.AuthorizeFolder("/Admin", "RequireAdminRole");
     options.Conventions.AllowAnonymousToFolder("/.well-known");
 });
 
-builder.Services.AddScoped<WhiskeyTracker.Web.Services.CollectionViewModelService>();
-builder.Services.AddScoped<WhiskeyTracker.Web.Services.LegacyMigrationService>();
-
-// ---------------------------------------------------------
-// 1. DATABASE CONFIGURATION (The Switchboard)
-// ---------------------------------------------------------
-// builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-// builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+});
 
 builder.Services.AddDataProtection()
     .PersistKeysToDbContext<AppDbContext>();
+
+builder.Services.AddScoped<WhiskeyTracker.Web.Services.CollectionViewModelService>();
+builder.Services.AddScoped<WhiskeyTracker.Web.Services.LegacyMigrationService>();
 
 // Email Service
 builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, WhiskeyTracker.Web.Services.EmailSender>();
@@ -98,18 +100,21 @@ using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
     // Migrate() applies any pending migrations and creates the DB if it doesn't exist
     if (context.Database.IsRelational())
     {
         context.Database.Migrate(); 
     }
 
-    // Only seed if the configuration explicitly says 'true'
+    // Initialize roles and admin setup (always run)
+    await DbInitializer.Initialize(context, userManager, roleManager, builder.Configuration);
+    
+    // Only seed broad data if the configuration explicitly says 'true'
     if (dbSection.GetValue<bool>("SeedOnStartup"))
     {
-        Console.WriteLine("--> Seeding Data...");
-        await DbInitializer.Initialize(context, userManager);
+        Console.WriteLine("--> Seeding Sample Data...");
     }
 }
 
