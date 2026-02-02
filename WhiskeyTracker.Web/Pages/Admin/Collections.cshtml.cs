@@ -27,24 +27,19 @@ public class CollectionsModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var collections = await _context.Collections
-            .Include(c => c.Bottles)
-            .Include(c => c.Members)
-                .ThenInclude(m => m.User)
-            .ToListAsync();
-
-        foreach (var c in collections)
-        {
-            var owner = c.Members.FirstOrDefault(m => m.Role == CollectionRole.Owner)?.User;
-            Collections.Add(new CollectionViewModel
+        Collections = await _context.Collections
+            .Select(c => new CollectionViewModel
             {
                 Id = c.Id,
                 Name = c.Name,
                 BottleCount = c.Bottles.Count,
                 MemberCount = c.Members.Count,
-                OwnerName = owner?.DisplayName ?? owner?.Email ?? "Unknown"
-            });
-        }
+                OwnerName = c.Members
+                    .Where(m => m.Role == CollectionRole.Owner)
+                    .Select(m => m.User.DisplayName ?? m.User.Email)
+                    .FirstOrDefault() ?? "Unknown"
+            })
+            .ToListAsync();
     }
 
     public async Task<IActionResult> OnPostDeleteCollectionAsync(int collectionId)

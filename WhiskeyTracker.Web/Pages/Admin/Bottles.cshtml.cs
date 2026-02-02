@@ -28,24 +28,17 @@ public class BottlesModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var bottles = await _context.Bottles
-            .Include(b => b.Whiskey)
-            .Include(b => b.Collection)
-            .Include(b => b.Purchaser)
-            .ToListAsync();
-
-        foreach (var b in bottles)
-        {
-            Bottles.Add(new BottleViewModel
+        Bottles = await _context.Bottles
+            .Select(b => new BottleViewModel
             {
                 Id = b.Id,
-                WhiskeyName = b.Whiskey?.Name ?? "Unknown Whiskey",
-                CollectionName = b.Collection?.Name ?? "No Collection",
-                OwnerEmail = b.Purchaser?.Email ?? "No Owner",
+                WhiskeyName = b.Whiskey.Name ?? "Unknown Whiskey",
+                CollectionName = b.Collection.Name ?? "No Collection",
+                OwnerEmail = b.Purchaser.Email ?? "No Owner",
                 Status = b.Status,
                 VolumePercent = b.CapacityMl > 0 ? (int)((double)b.CurrentVolumeMl / b.CapacityMl * 100) : 0
-            });
-        }
+            })
+            .ToListAsync();
     }
 
     public async Task<IActionResult> OnPostDeleteBottleAsync(int bottleId)

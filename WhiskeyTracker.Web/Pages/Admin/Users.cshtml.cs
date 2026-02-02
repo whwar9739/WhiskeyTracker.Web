@@ -31,17 +31,18 @@ public class UsersModel : PageModel
 
     public async Task OnGetAsync()
     {
-        var users = await _userManager.Users.ToListAsync();
-        foreach (var user in users)
-        {
-            Users.Add(new UserViewModel
+        var adminRole = await _roleManager.FindByNameAsync("Admin");
+        var adminRoleId = adminRole?.Id;
+
+        Users = await _context.Users
+            .Select(u => new UserViewModel
             {
-                Id = user.Id,
-                Email = user.Email,
-                DisplayName = user.DisplayName,
-                IsAdmin = await _userManager.IsInRoleAsync(user, "Admin")
-            });
-        }
+                Id = u.Id,
+                Email = u.Email,
+                DisplayName = u.DisplayName,
+                IsAdmin = adminRoleId != null && _context.Set<IdentityUserRole<string>>().Any(ur => ur.UserId == u.Id && ur.RoleId == adminRoleId)
+            })
+            .ToListAsync();
     }
 
     public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
