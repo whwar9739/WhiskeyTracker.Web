@@ -5,7 +5,7 @@ namespace WhiskeyTracker.Web.Data;
 
 public static class DbInitializer
 {
-    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, bool seedSampleData)
     {
         // 1. Ensure the DB exists
         context.Database.EnsureCreated();
@@ -35,6 +35,8 @@ public static class DbInitializer
                 }
             }
         }
+
+        if (!seedSampleData) return;
 
         // 4. Add Test User
         var testUserEmail = "test@example.com";

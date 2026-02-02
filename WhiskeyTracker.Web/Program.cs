@@ -109,13 +109,15 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Initialize roles and admin setup (always run)
-    await DbInitializer.Initialize(context, userManager, roleManager, builder.Configuration);
-    
     // Only seed broad data if the configuration explicitly says 'true'
-    if (dbSection.GetValue<bool>("SeedOnStartup"))
+    bool seedSampleData = dbSection.GetValue<bool>("SeedOnStartup");
+    
+    if (seedSampleData)
     {
         Console.WriteLine("--> Seeding Sample Data...");
     }
+
+    await DbInitializer.Initialize(context, userManager, roleManager, builder.Configuration, seedSampleData);
 }
 
 
