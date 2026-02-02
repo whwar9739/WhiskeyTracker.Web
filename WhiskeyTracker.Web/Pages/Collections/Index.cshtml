@@ -1,0 +1,42 @@
+@page
+@model WhiskeyTracker.Web.Pages.Collections.IndexModel
+@{
+    ViewData["Title"] = "My Collections";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>My Collections</h1>
+    <a asp-page="./Create" class="btn btn-primary">+ Create Collection</a>
+</div>
+
+@if (Model.MyMemberships.Count == 0)
+{
+    <div class="alert alert-warning shadow-sm">
+        <h4 class="alert-heading">No Collections Found!</h4>
+        <p>You need at least one collection to start adding bottles to your library.</p>
+        <hr>
+        <p class="mb-0">Click the <strong>Create Collection</strong> button above to get started.</p>
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var membership in Model.MyMemberships)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">@membership.Collection.Name</h5>
+                        <p class="card-text text-muted small">
+                            Role: <span class="badge bg-info text-dark">@membership.Role</span>
+                        </p>
+                        <p class="card-text">
+                            <strong>@membership.Collection.Bottles.Count</strong> Bottles<br />
+                            <strong>@membership.Collection.Members.Count</strong> Members
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

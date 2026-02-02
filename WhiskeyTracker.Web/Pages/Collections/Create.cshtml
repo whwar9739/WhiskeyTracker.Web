@@ -1,0 +1,36 @@
+@page
+@model WhiskeyTracker.Web.Pages.Collections.CreateModel
+@{
+    ViewData["Title"] = "Create Collection";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Create New Collection</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Collections help you organize your whiskies and share them with others.</p>
+                    <form method="post">
+                        <div asp-validation-summary="All" class="text-danger"></div>
+                        <div class="form-group mb-3">
+                            <label asp-for="Collection.Name" class="form-label">Collection Name</label>
+                            <input asp-for="Collection.Name" class="form-control" placeholder="e.g. Personal Stash, Office Bar" />
+                            <span asp-validation-for="Collection.Name" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">Create Collection</button>
+                            <a asp-page="./Index" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -12,7 +12,18 @@
                     <h4 class="mb-0">Add Bottle: @Model.WhiskeyName</h4>
                 </div>
                 <div class="card-body">
+                    @if (Model.Collections == null || !Model.Collections.Any())
+                    {
+                        <div class="alert alert-danger">
+                            <h5><i class="bi bi-exclamation-triangle-fill"></i> No Collections Found!</h5>
+                            <p>You cannot add a bottle because you don't belong to any collections. Please create a collection first to organize your bottles.</p>
+                            <a asp-page="/Collections/Create" class="btn btn-primary">Create a Collection</a>
+                        </div>
+                    }
+                    else
+                    {
                     <form method="post">
+                        <div asp-validation-summary="All" class="text-danger"></div>
                         <input type="hidden" asp-for="NewBottle.WhiskeyId" />
 
                         <div class="row">
@@ -104,6 +115,7 @@
                             <a asp-page="./Details" asp-route-id="@Model.NewBottle.WhiskeyId" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
+                    }
                 </div>
             </div>
         </div>
