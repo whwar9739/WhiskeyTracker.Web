@@ -1,0 +1,106 @@
+@page "{id:int}"
+@model WhiskeyTracker.Web.Pages.Collections.DetailsModel
+@{
+    ViewData["Title"] = "Collection Details";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-5 mb-0">@Model.Collection.Name</h1>
+            <p class="text-muted">Collection Management</p>
+        </div>
+        <div>
+            <a asp-page="./Index" class="btn btn-outline-secondary">Back to List</a>
+            @if (Model.IsOwner)
+            {
+                <a asp-page="./Invite" asp-route-id="@Model.Collection.Id" class="btn btn-primary">Invite Member</a>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Current Members</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var member in Model.Members)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@(string.IsNullOrEmpty(member.User.DisplayName) ? member.User.UserName : member.User.DisplayName)</strong>
+                                        </td>
+                                        <td>@member.User.Email</td>
+                                        <td>
+                                            <span class="badge @(member.Role == WhiskeyTracker.Web.Data.CollectionRole.Owner ? "bg-danger" : member.Role == WhiskeyTracker.Web.Data.CollectionRole.Editor ? "bg-warning text-dark" : "bg-info text-dark")">
+                                                @member.Role
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.IsOwner && Model.PendingInvitations.Any())
+            {
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">Pending Invitations</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Sent At</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var invite in Model.PendingInvitations)
+                                    {
+                                        <tr>
+                                            <td>@invite.InviteeEmail</td>
+                                            <td>@invite.Role</td>
+                                            <td>@invite.CreatedAt.ToLocalTime().ToString("g")</td>
+                                            <td><span class="badge bg-warning text-dark">@invite.Status</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-light p-3">
+                <h5>Statistics</h5>
+                <hr />
+                <p><strong>Total Members:</strong> @Model.Members.Count</p>
+                @if (Model.IsOwner)
+                {
+                    <p><strong>Pending Invites:</strong> @Model.PendingInvitations.Count</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
