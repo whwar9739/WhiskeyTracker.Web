@@ -115,45 +115,57 @@ public class UsersModel : PageModel
             return RedirectToPage();
         }
 
-        // 1. Fetch bottles owned by user to identify all dependencies
-        var bottles = await _context.Bottles.Where(b => b.UserId == userId).ToListAsync();
-        var bottleIds = bottles.Select(b => b.Id).ToList();
-
-        // 2. Consolidate deletion of all related tasting notes in a single query
-        // Delete notes BY the user OR notes ON bottles owned by the user
-        var notesToDelete = await _context.TastingNotes
-            .Where(n => n.UserId == userId || (n.BottleId.HasValue && bottleIds.Contains(n.BottleId.Value)))
-            .ToListAsync();
-        _context.TastingNotes.RemoveRange(notesToDelete);
-
-        // 3. Cleanup BlendComponents involving these bottles
-        if (bottleIds.Any())
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            var blendComponents = await _context.BlendComponents
-                .Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId))
+            // 1. Fetch bottles owned by user to identify all dependencies
+            var bottles = await _context.Bottles.Where(b => b.UserId == userId).ToListAsync();
+            var bottleIds = bottles.Select(b => b.Id).ToList();
+
+            // 2. Consolidate deletion of all related tasting notes in a single query
+            var notesToDelete = await _context.TastingNotes
+                .Where(n => n.UserId == userId || (n.BottleId.HasValue && bottleIds.Contains(n.BottleId.Value)))
                 .ToListAsync();
-            _context.BlendComponents.RemoveRange(blendComponents);
+            _context.TastingNotes.RemoveRange(notesToDelete);
+
+            // 3. Cleanup BlendComponents involving these bottles
+            if (bottleIds.Any())
+            {
+                var blendComponents = await _context.BlendComponents
+                    .Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId))
+                    .ToListAsync();
+                _context.BlendComponents.RemoveRange(blendComponents);
+            }
+
+            _context.Bottles.RemoveRange(bottles);
+
+            // Cleanup: Existing Memberships & Invitations
+            var memberships = await _context.CollectionMembers.Where(m => m.UserId == userId).ToListAsync();
+            _context.CollectionMembers.RemoveRange(memberships);
+
+            var invitations = await _context.CollectionInvitations.Where(i => i.InviteeEmail == user.Email).ToListAsync();
+            _context.CollectionInvitations.RemoveRange(invitations);
+
+            // Now, delete the user. The UserStore will call SaveChangesAsync, which will
+            // be part of the current transaction.
+            var result = await _userManager.DeleteAsync(user);
+
+            if (result.Succeeded)
+            {
+                await transaction.CommitAsync();
+                TempData["Message"] = $"User {user.Email} and their data have been deleted.";
+            }
+            else
+            {
+                await transaction.RollbackAsync();
+                TempData["ErrorMessage"] = $"Error deleting user: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            }
         }
-
-        _context.Bottles.RemoveRange(bottles);
-
-        // Cleanup: Existing Memberships & Invitations
-        var memberships = await _context.CollectionMembers.Where(m => m.UserId == userId).ToListAsync();
-        _context.CollectionMembers.RemoveRange(memberships);
-
-        var invitations = await _context.CollectionInvitations.Where(i => i.InviteeEmail == user.Email).ToListAsync();
-        _context.CollectionInvitations.RemoveRange(invitations);
-
-        await _context.SaveChangesAsync();
-        
-        var result = await _userManager.DeleteAsync(user);
-        if (result.Succeeded)
+        catch (Exception ex)
         {
-            TempData["Message"] = $"User {user.Email} and their data have been deleted.";
-        }
-        else
-        {
-            TempData["ErrorMessage"] = "Error deleting user.";
+            await transaction.RollbackAsync();
+            // TODO: Log the exception with ILogger
+            TempData["ErrorMessage"] = "A critical error occurred while deleting user data. The operation was rolled back.";
         }
 
         return RedirectToPage();

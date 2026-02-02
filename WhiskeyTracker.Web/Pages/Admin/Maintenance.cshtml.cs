@@ -66,29 +66,31 @@ public class MaintenanceModel : PageModel
             Orphans.Add(new OrphanRecord { EntityType = "Bottle", Identifier = $"ID: {b.Id}", Reason = "Missing Collection or User" });
         }
 
-        if (Orphans.Count >= MaxScanResults) return;
+        if (Orphans.Count >= MaxScanResults) { Orphans = Orphans.Take(MaxScanResults).ToList(); return; }
 
-        var invalidMembers = await GetOrphanedMembers().Take(MaxScanResults).ToListAsync();
+        var invalidMembers = await GetOrphanedMembers().Take(MaxScanResults - Orphans.Count).ToListAsync();
         foreach (var m in invalidMembers)
         {
             Orphans.Add(new OrphanRecord { EntityType = "CollectionMember", Identifier = $"U: {m.UserId}, C: {m.CollectionId}", Reason = "Missing User or Collection" });
         }
 
-        if (Orphans.Count >= MaxScanResults) return;
+        if (Orphans.Count >= MaxScanResults) { Orphans = Orphans.Take(MaxScanResults).ToList(); return; }
 
-        var invalidNotes = await GetOrphanedNotes().Take(MaxScanResults).ToListAsync();
+        var invalidNotes = await GetOrphanedNotes().Take(MaxScanResults - Orphans.Count).ToListAsync();
         foreach (var n in invalidNotes)
         {
             Orphans.Add(new OrphanRecord { EntityType = "TastingNote", Identifier = $"ID: {n.Id}", Reason = "Missing Bottle" });
         }
 
-        if (Orphans.Count >= MaxScanResults) return;
+        if (Orphans.Count >= MaxScanResults) { Orphans = Orphans.Take(MaxScanResults).ToList(); return; }
 
-        var invalidBlends = await GetOrphanedBlends().Take(MaxScanResults).ToListAsync();
+        var invalidBlends = await GetOrphanedBlends().Take(MaxScanResults - Orphans.Count).ToListAsync();
         foreach (var bc in invalidBlends)
         {
             Orphans.Add(new OrphanRecord { EntityType = "BlendComponent", Identifier = $"ID: {bc.Id}", Reason = "Missing Source or Target Bottle" });
         }
+
+        if (Orphans.Count > MaxScanResults) { Orphans = Orphans.Take(MaxScanResults).ToList(); }
     }
 
     public async Task<IActionResult> OnPostCleanupAsync()
