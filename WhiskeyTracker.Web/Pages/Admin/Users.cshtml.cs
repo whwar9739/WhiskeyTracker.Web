@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WhiskeyTracker.Web.Data;
+using Microsoft.Extensions.Logging;
 
 namespace WhiskeyTracker.Web.Pages.Admin;
 
@@ -11,12 +12,14 @@ public class UsersModel : PageModel
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly AppDbContext _context;
+    private readonly ILogger<UsersModel> _logger;
 
-    public UsersModel(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context)
+    public UsersModel(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, AppDbContext context, ILogger<UsersModel> logger)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
+        _logger = logger;
     }
 
     public List<UserViewModel> Users { get; set; } = new();
@@ -164,7 +167,7 @@ public class UsersModel : PageModel
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            // TODO: Log the exception with ILogger
+            _logger.LogError(ex, "Error deleting user {UserId}", userId);
             TempData["ErrorMessage"] = "A critical error occurred while deleting user data. The operation was rolled back.";
         }
 
