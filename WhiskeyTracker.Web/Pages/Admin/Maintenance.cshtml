@@ -1,0 +1,84 @@
+@page
+@model WhiskeyTracker.Web.Pages.Admin.MaintenanceModel
+@{
+    ViewData["Title"] = "System Maintenance";
+}
+
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Admin/Index">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active">Maintenance</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>System Maintenance</h1>
+        <form method="post" asp-page-handler="Cleanup">
+            <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to delete all identified orphaned records?');">
+                Cleanup All Orphans
+            </button>
+        </form>
+    </div>
+
+    @if (Model.Orphans.Count >= 100)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> <strong>Scan Limit Reached:</strong> Showing the first 100 orphaned records. More may exist. Please perform cleanup to see additional records.
+        </div>
+    }
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle me-2"></i> @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-octagon me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Orphaned Records Scan</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Entity Type</th>
+                        <th>Identifier</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Orphans.Any())
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                No orphaned records found. System is clean!
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var orphan in Model.Orphans)
+                        {
+                            <tr>
+                                <td><span class="badge bg-secondary">@orphan.EntityType</span></td>
+                                <td><code>@orphan.Identifier</code></td>
+                                <td class="text-danger">@orphan.Reason</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -15,6 +15,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IDataProtectionK
     public DbSet<BlendComponent> BlendComponents { get; set; }
     public DbSet<Collection> Collections { get; set; }
     public DbSet<CollectionMember> CollectionMembers { get; set; }
+    public DbSet<CollectionInvitation> CollectionInvitations { get; set; }
 
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; }
 }

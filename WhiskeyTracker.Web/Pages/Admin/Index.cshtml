@@ -1,0 +1,65 @@
+@page
+@model WhiskeyTracker.Web.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Admin Dashboard</h1>
+        <div class="btn-group">
+            <a asp-page="/Admin/Users" class="btn btn-outline-primary">Manage Users</a>
+            <a asp-page="/Admin/Collections" class="btn btn-outline-primary">Manage Collections</a>
+            <a asp-page="/Admin/Bottles" class="btn btn-outline-primary">Manage Bottles</a>
+            <a asp-page="/Admin/Maintenance" class="btn btn-outline-warning">Maintenance</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4 col-lg-2">
+            <div class="card h-100 shadow-sm border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle mb-2 text-muted">Users</h6>
+                    <h2 class="card-title mb-0">@Model.TotalUsers</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card h-100 shadow-sm border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle mb-2 text-muted">Whiskies</h6>
+                    <h2 class="card-title mb-0">@Model.TotalWhiskies</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card h-100 shadow-sm border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle mb-2 text-muted">Bottles</h6>
+                    <h2 class="card-title mb-0">@Model.TotalBottles</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card h-100 shadow-sm border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle mb-2 text-muted">Collections</h6>
+                    <h2 class="card-title mb-0">@Model.TotalCollections</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-2">
+            <div class="card h-100 shadow-sm border-0 bg-light">
+                <div class="card-body text-center">
+                    <h6 class="card-subtitle mb-2 text-muted">Tasting Notes</h6>
+                    <h2 class="card-title mb-0">@Model.TotalTastingNotes</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-5">
+        <h3>Administrative Tasks</h3>
+        <p class="text-muted">Use the navigation above to manage the system. Click on "Maintenance" to check for orphaned records and perform system cleanup.</p>
+    </div>
+</div>

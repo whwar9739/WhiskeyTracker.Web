@@ -24,6 +24,15 @@ When the user asks to "ship this," "create a PR," or "save my work," you must fo
    - *Note:* `--fill` will auto-generate the title and body from your commit messages.
    - If `--fill` fails or is too vague, generate a title/body and run: `gh pr create --title "feat: <title>" --body "<summary>"`
 
+## Protocol: Testing & Quality
+1. **Always Consider Tests**: For every new feature or bug fix, evaluate if unit tests (in `WhiskeyTracker.Tests`) are required.
+2. **Planning Phase**: Every `implementation_plan.md` **must** include a "Verification Plan" with both "Automated Tests" and "Manual Verification" sections.
+3. **Execution Phase**: Implement tests alongside the code. Ensure they follow established patterns.
+4. **Verification Phase**: 
+   - Run `dotnet test` and report results.
+   - Perform manual verification using the `browser_subagent` when UI changes are involved.
+   - Summarize all testing in the `walkthrough.md`.
+
 ## Error Handling
 - If `gh pr create` fails due to auth, stop and ask user to run `gh auth login`.
 - If there are merge conflicts, **stop** and ask the user for guidance.

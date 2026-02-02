@@ -9,6 +9,47 @@
     <a asp-page="./Create" class="btn btn-primary">+ Create Collection</a>
 </div>
 
+@if (Model.MyPendingInvitations.Any())
+{
+    <div class="card shadow-sm border-warning mb-4">
+        <div class="card-header bg-warning text-dark d-flex align-items-center">
+            <h5 class="mb-0"><i class="bi bi-envelope-fill me-2"></i> Pending Invitations</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Collection</th>
+                            <th>Invited By</th>
+                            <th>Role</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var invite in Model.MyPendingInvitations)
+                        {
+                            <tr>
+                                <td class="align-middle"><strong>@invite.Collection.Name</strong></td>
+                                <td class="align-middle">@(string.IsNullOrEmpty(invite.InviterUser.DisplayName) ? invite.InviterUser.UserName : invite.InviterUser.DisplayName)</td>
+                                <td class="align-middle"><span class="badge bg-secondary">@invite.Role</span></td>
+                                <td class="text-end">
+                                    <form method="post" asp-page-handler="AcceptInvite" asp-route-inviteId="@invite.Id" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="DeclineInvite" asp-route-inviteId="@invite.Id" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Decline</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
 @if (Model.MyMemberships.Count == 0)
 {
     <div class="alert alert-warning shadow-sm">
@@ -26,7 +67,11 @@ else
             <div class="col-md-4 mb-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">@membership.Collection.Name</h5>
+                        <h5 class="card-title">
+                            <a asp-page="./Details" asp-route-id="@membership.Collection.Id" class="text-decoration-none text-dark">
+                                @membership.Collection.Name
+                            </a>
+                        </h5>
                         <p class="card-text text-muted small">
                             Role: <span class="badge bg-info text-dark">@membership.Role</span>
                         </p>
