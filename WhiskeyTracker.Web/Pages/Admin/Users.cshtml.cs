@@ -85,16 +85,40 @@ public class UsersModel : PageModel
             return RedirectToPage();
         }
 
-        // Cleanup associated data
+        // Cleanup: Tasting Sessions & Notes
+        var sessions = await _context.TastingSessions.Where(s => s.UserId == userId).ToListAsync();
+        _context.TastingSessions.RemoveRange(sessions);
+
+        var notes = await _context.TastingNotes.Where(n => n.UserId == userId).ToListAsync();
+        _context.TastingNotes.RemoveRange(notes);
+
+        // Cleanup: Bottles and their dependencies
+        var bottles = await _context.Bottles.Where(b => b.UserId == userId).ToListAsync();
+        
+        // Use bottle IDs to find related blend components (source or infinity)
+        var bottleIds = bottles.Select(b => b.Id).ToList();
+        var blendComponents = await _context.BlendComponents
+            .Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId))
+            .ToListAsync();
+        _context.BlendComponents.RemoveRange(blendComponents);
+        
+        // Remove associated tasting notes for these bottles (even if written by others? 
+        // Logic check: If bottle is gone, note is orphaned. Yes.)
+        var bottleNotes = await _context.TastingNotes.Where(n => n.BottleId != null && bottleIds.Contains(n.BottleId.Value)).ToListAsync();
+        // Avoid duplicate tracking if we already removed them above via UserId
+        foreach (var bn in bottleNotes)
+        {
+            if (!_context.Entry(bn).State.Equals(EntityState.Deleted))
+            {
+                 _context.TastingNotes.Remove(bn);
+            }
+        }
+
+        _context.Bottles.RemoveRange(bottles);
+
+        // Cleanup: Existing Memberships & Invitations
         var memberships = await _context.CollectionMembers.Where(m => m.UserId == userId).ToListAsync();
         _context.CollectionMembers.RemoveRange(memberships);
-
-        var bottles = await _context.Bottles.Where(b => b.UserId == userId).ToListAsync();
-        // For bottles, we might want to just Null out the UserId if we want to keep the bottle in the collection,
-        // but usually, if a user is deleted, their personal bottles are gone.
-        // If they are in a shared collection, we might have issues.
-        // Let's stick to the plan: "Remove all CollectionMember associations and Bottle records owned by the user."
-        _context.Bottles.RemoveRange(bottles);
 
         var invitations = await _context.CollectionInvitations.Where(i => i.InviteeEmail == user.Email).ToListAsync();
         _context.CollectionInvitations.RemoveRange(invitations);
