@@ -2,16 +2,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WhiskeyTracker.Web.Data;
+using Microsoft.Extensions.Logging;
 
 namespace WhiskeyTracker.Web.Pages.Admin;
 
 public class BottlesModel : PageModel
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<BottlesModel> _logger;
 
-    public BottlesModel(AppDbContext context)
+    public BottlesModel(AppDbContext context, ILogger<BottlesModel> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public List<BottleViewModel> Bottles { get; set; } = new();
@@ -61,19 +64,31 @@ public class BottlesModel : PageModel
 
         if (bottle == null) return NotFound();
 
-        // Cleanup: Tasting Notes
-        _context.TastingNotes.RemoveRange(bottle.TastingNotes);
-        
-        // Cleanup: Blend Components (where this bottle is source or target)
-        var blendComponents = await _context.BlendComponents
-            .Where(bc => bc.SourceBottleId == bottleId || bc.InfinityBottleId == bottleId)
-            .ToListAsync();
-        _context.BlendComponents.RemoveRange(blendComponents);
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Cleanup: Tasting Notes
+            _context.TastingNotes.RemoveRange(bottle.TastingNotes);
+            
+            // Cleanup: Blend Components (where this bottle is source or target)
+            var blendComponents = await _context.BlendComponents
+                .Where(bc => bc.SourceBottleId == bottleId || bc.InfinityBottleId == bottleId)
+                .ToListAsync();
+            _context.BlendComponents.RemoveRange(blendComponents);
 
-        _context.Bottles.Remove(bottle);
-        await _context.SaveChangesAsync();
+            _context.Bottles.Remove(bottle);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
-        TempData["Message"] = $"Bottle {bottleId} and its history have been deleted.";
+            TempData["Message"] = $"Bottle {bottleId} and its history have been deleted.";
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error deleting bottle {BottleId}", bottleId);
+            TempData["ErrorMessage"] = "A critical error occurred while deleting the bottle. The operation was rolled back.";
+        }
+
         return RedirectToPage();
     }
 }

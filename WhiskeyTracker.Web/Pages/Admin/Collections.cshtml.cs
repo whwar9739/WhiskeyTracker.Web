@@ -2,16 +2,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using WhiskeyTracker.Web.Data;
+using Microsoft.Extensions.Logging;
 
 namespace WhiskeyTracker.Web.Pages.Admin;
 
 public class CollectionsModel : PageModel
 {
     private readonly AppDbContext _context;
+    private readonly ILogger<CollectionsModel> _logger;
 
-    public CollectionsModel(AppDbContext context)
+    public CollectionsModel(AppDbContext context, ILogger<CollectionsModel> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public List<CollectionViewModel> Collections { get; set; } = new();
@@ -63,28 +66,40 @@ public class CollectionsModel : PageModel
 
         if (collection == null) return NotFound();
 
-        // Cleanup: Bottles in this collection and their dependencies
-        var bottleIds = collection.Bottles.Select(b => b.Id).ToList();
-        if (bottleIds.Any())
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
         {
-            var notesToDelete = await _context.TastingNotes.Where(n => n.BottleId.HasValue && bottleIds.Contains(n.BottleId.Value)).ToListAsync();
-            _context.TastingNotes.RemoveRange(notesToDelete);
+            // Cleanup: Bottles in this collection and their dependencies
+            var bottleIds = collection.Bottles.Select(b => b.Id).ToList();
+            if (bottleIds.Any())
+            {
+                var notesToDelete = await _context.TastingNotes.Where(n => n.BottleId.HasValue && bottleIds.Contains(n.BottleId.Value)).ToListAsync();
+                _context.TastingNotes.RemoveRange(notesToDelete);
 
-            var blendsToDelete = await _context.BlendComponents.Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId)).ToListAsync();
-            _context.BlendComponents.RemoveRange(blendsToDelete);
+                var blendsToDelete = await _context.BlendComponents.Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId)).ToListAsync();
+                _context.BlendComponents.RemoveRange(blendsToDelete);
+            }
+
+            _context.Bottles.RemoveRange(collection.Bottles);
+            _context.CollectionMembers.RemoveRange(collection.Members);
+            
+            // Cleanup: Invitations for this collection
+            var invitations = await _context.CollectionInvitations.Where(i => i.CollectionId == collectionId).ToListAsync();
+            _context.CollectionInvitations.RemoveRange(invitations);
+
+            _context.Collections.Remove(collection);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["Message"] = $"Collection '{collection.Name}' and its bottles/memberships have been deleted.";
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error deleting collection {CollectionId}", collectionId);
+            TempData["ErrorMessage"] = "A critical error occurred while deleting the collection. The operation was rolled back.";
         }
 
-        _context.Bottles.RemoveRange(collection.Bottles);
-        _context.CollectionMembers.RemoveRange(collection.Members);
-        
-        // Cleanup: Invitations for this collection
-        var invitations = await _context.CollectionInvitations.Where(i => i.CollectionId == collectionId).ToListAsync();
-        _context.CollectionInvitations.RemoveRange(invitations);
-
-        _context.Collections.Remove(collection);
-        await _context.SaveChangesAsync();
-
-        TempData["Message"] = $"Collection '{collection.Name}' and its bottles/memberships have been deleted.";
         return RedirectToPage();
     }
 }

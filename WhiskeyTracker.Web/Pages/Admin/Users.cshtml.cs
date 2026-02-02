@@ -68,14 +68,9 @@ public class UsersModel : PageModel
                 Id = u.Id,
                 Email = u.Email,
                 DisplayName = u.DisplayName,
-                IsAdmin = false // Placeholder
+                IsAdmin = adminUserIds.Contains(u.Id)
             })
             .ToListAsync();
-
-        foreach (var u in Users)
-        {
-            u.IsAdmin = adminUserIds.Contains(u.Id);
-        }
     }
 
     public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
@@ -115,6 +110,17 @@ public class UsersModel : PageModel
         if (currentUser?.Id == userId)
         {
             TempData["ErrorMessage"] = "You cannot delete yourself.";
+            return RedirectToPage();
+        }
+
+        // Safeguard: Check if user is the sole owner of any collection
+        var isSoleOwnerOfAnyCollection = await _context.Collections
+            .Where(c => c.Members.Any(m => m.UserId == userId && m.Role == CollectionRole.Owner))
+            .AnyAsync(c => c.Members.Count(m => m.Role == CollectionRole.Owner) <= 1);
+
+        if (isSoleOwnerOfAnyCollection)
+        {
+            TempData["ErrorMessage"] = $"Cannot delete user {user.Email} because they are the sole owner of one or more collections. Please transfer ownership or delete the collection first.";
             return RedirectToPage();
         }
 
