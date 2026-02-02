@@ -51,7 +51,17 @@ public class CollectionsModel : PageModel
 
         if (collection == null) return NotFound();
 
-        // Cleanup: Bottles in this collection
+        // Cleanup: Bottles in this collection and their dependencies
+        var bottleIds = collection.Bottles.Select(b => b.Id).ToList();
+        if (bottleIds.Any())
+        {
+            var notesToDelete = await _context.TastingNotes.Where(n => n.BottleId.HasValue && bottleIds.Contains(n.BottleId.Value)).ToListAsync();
+            _context.TastingNotes.RemoveRange(notesToDelete);
+
+            var blendsToDelete = await _context.BlendComponents.Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId)).ToListAsync();
+            _context.BlendComponents.RemoveRange(blendsToDelete);
+        }
+
         _context.Bottles.RemoveRange(collection.Bottles);
         _context.CollectionMembers.RemoveRange(collection.Members);
         

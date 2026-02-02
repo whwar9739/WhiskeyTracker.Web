@@ -28,58 +28,56 @@ public class MaintenanceModel : PageModel
         await ScanForOrphans();
     }
 
+    private IQueryable<Bottle> GetOrphanedBottles()
+    {
+        return _context.Bottles
+            .Where(b => (b.CollectionId.HasValue && !_context.Collections.Any(c => c.Id == b.CollectionId.Value)) ||
+                        (!string.IsNullOrEmpty(b.UserId) && !_context.Users.Any(u => u.Id == b.UserId)));
+    }
+
+    private IQueryable<CollectionMember> GetOrphanedMembers()
+    {
+        return _context.CollectionMembers
+            .Where(m => !_context.Users.Any(u => u.Id == m.UserId) || 
+                        !_context.Collections.Any(c => c.Id == m.CollectionId));
+    }
+
+    private IQueryable<TastingNote> GetOrphanedNotes()
+    {
+        return _context.TastingNotes
+            .Where(n => n.BottleId.HasValue && !_context.Bottles.Any(b => b.Id == n.BottleId.Value));
+    }
+
+    private IQueryable<BlendComponent> GetOrphanedBlends()
+    {
+        return _context.BlendComponents
+            .Where(bc => !_context.Bottles.Any(b => b.Id == bc.SourceBottleId) || 
+                         !_context.Bottles.Any(b => b.Id == bc.InfinityBottleId));
+    }
+
     private async Task ScanForOrphans()
     {
         Orphans.Clear();
 
-        // 1. Bottles without valid Collection
-        var collectionsIds = await _context.Collections.Select(c => c.Id).ToListAsync();
-        var bottlesWithMissingCollections = await _context.Bottles
-            .Where(b => b.CollectionId.HasValue && !collectionsIds.Contains(b.CollectionId.Value))
-            .ToListAsync();
-        
-        foreach (var b in bottlesWithMissingCollections)
+        var badBottles = await GetOrphanedBottles().ToListAsync();
+        foreach (var b in badBottles)
         {
-            Orphans.Add(new OrphanRecord { EntityType = "Bottle", Identifier = $"ID: {b.Id}", Reason = "Missing Collection" });
+            Orphans.Add(new OrphanRecord { EntityType = "Bottle", Identifier = $"ID: {b.Id}", Reason = "Missing Collection or User" });
         }
 
-        // 2. Bottles without valid User
-        var userIds = await _context.Users.Select(u => u.Id).ToListAsync();
-        var bottlesWithMissingUsers = await _context.Bottles
-            .Where(b => !string.IsNullOrEmpty(b.UserId) && !userIds.Contains(b.UserId))
-            .ToListAsync();
-        
-        foreach (var b in bottlesWithMissingUsers)
-        {
-            Orphans.Add(new OrphanRecord { EntityType = "Bottle", Identifier = $"ID: {b.Id}", Reason = "Missing User" });
-        }
-
-        // 3. CollectionMembers with missing User or Collection
-        var invalidMembers = await _context.CollectionMembers
-            .Where(m => !userIds.Contains(m.UserId) || !collectionsIds.Contains(m.CollectionId))
-            .ToListAsync();
-        
+        var invalidMembers = await GetOrphanedMembers().ToListAsync();
         foreach (var m in invalidMembers)
         {
             Orphans.Add(new OrphanRecord { EntityType = "CollectionMember", Identifier = $"U: {m.UserId}, C: {m.CollectionId}", Reason = "Missing User or Collection" });
         }
 
-        // 4. TastingNotes without valid Bottle
-        var bottleIds = await _context.Bottles.Select(b => b.Id).ToListAsync();
-        var invalidNotes = await _context.TastingNotes
-            .Where(n => n.BottleId.HasValue && !bottleIds.Contains(n.BottleId.Value))
-            .ToListAsync();
-            
+        var invalidNotes = await GetOrphanedNotes().ToListAsync();
         foreach (var n in invalidNotes)
         {
             Orphans.Add(new OrphanRecord { EntityType = "TastingNote", Identifier = $"ID: {n.Id}", Reason = "Missing Bottle" });
         }
-        
-        // 5. BlendComponents without valid Source or Infinity Bottle
-        var invalidBlends = await _context.BlendComponents
-            .Where(bc => !bottleIds.Contains(bc.SourceBottleId) || !bottleIds.Contains(bc.InfinityBottleId))
-            .ToListAsync();
-            
+
+        var invalidBlends = await GetOrphanedBlends().ToListAsync();
         foreach (var bc in invalidBlends)
         {
             Orphans.Add(new OrphanRecord { EntityType = "BlendComponent", Identifier = $"ID: {bc.Id}", Reason = "Missing Source or Target Bottle" });
@@ -88,33 +86,35 @@ public class MaintenanceModel : PageModel
 
     public async Task<IActionResult> OnPostCleanupAsync()
     {
-        var collectionsIds = await _context.Collections.Select(c => c.Id).ToListAsync();
-        var userIds = await _context.Users.Select(u => u.Id).ToListAsync();
-        
-        // 1. Bottles without valid Collection/User
-        var badBottles = await _context.Bottles
-            .Where(b => (b.CollectionId.HasValue && !collectionsIds.Contains(b.CollectionId.Value)) || 
-                        (!string.IsNullOrEmpty(b.UserId) && !userIds.Contains(b.UserId)))
-            .ToListAsync();
+        // 1. Identify Orphaned Bottles (Parents)
+        var badBottles = await GetOrphanedBottles().ToListAsync();
+        var badBottleIds = badBottles.Select(b => b.Id).ToList();
+
+        // 2. Identify Dependencies of Bad Bottles (Notes/Blends that aren't natively orphaned yet, but will be)
+        if (badBottleIds.Any())
+        {
+            var notesOfBadBottles = await _context.TastingNotes
+                .Where(n => n.BottleId.HasValue && badBottleIds.Contains(n.BottleId.Value))
+                .ToListAsync();
+            _context.TastingNotes.RemoveRange(notesOfBadBottles);
+
+            var blendsOfBadBottles = await _context.BlendComponents
+                .Where(bc => badBottleIds.Contains(bc.SourceBottleId) || badBottleIds.Contains(bc.InfinityBottleId))
+                .ToListAsync();
+            _context.BlendComponents.RemoveRange(blendsOfBadBottles);
+        }
+
+        // 3. Remove Bad Bottles
         _context.Bottles.RemoveRange(badBottles);
 
-        // 2. Invalid Memberships
-        var invalidMembers = await _context.CollectionMembers
-            .Where(m => !userIds.Contains(m.UserId) || !collectionsIds.Contains(m.CollectionId))
-            .ToListAsync();
+        // 4. Remove other natively orphaned records
+        var invalidMembers = await GetOrphanedMembers().ToListAsync();
         _context.CollectionMembers.RemoveRange(invalidMembers);
 
-        // 3. Invalid Notes
-        var bottleIds = await _context.Bottles.Select(b => b.Id).ToListAsync();
-        var invalidNotes = await _context.TastingNotes
-            .Where(n => n.BottleId.HasValue && !bottleIds.Contains(n.BottleId.Value))
-            .ToListAsync();
+        var invalidNotes = await GetOrphanedNotes().ToListAsync();
         _context.TastingNotes.RemoveRange(invalidNotes);
 
-        // 4. Invalid Blends
-        var invalidBlends = await _context.BlendComponents
-            .Where(bc => !bottleIds.Contains(bc.SourceBottleId) || !bottleIds.Contains(bc.InfinityBottleId))
-            .ToListAsync();
+        var invalidBlends = await GetOrphanedBlends().ToListAsync();
         _context.BlendComponents.RemoveRange(invalidBlends);
 
         await _context.SaveChangesAsync();
