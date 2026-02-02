@@ -1,16 +1,53 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting; // Added for IHostEnvironment
 using WhiskeyTracker.Web.Data;
 
 namespace WhiskeyTracker.Web.Data;
 
 public static class DbInitializer
 {
-    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager)
+    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, bool seedSampleData, ILogger logger, IHostEnvironment env)
     {
         // 1. Ensure the DB exists
         context.Database.EnsureCreated();
 
-        // 2. Add Test User
+        // 2. Seed Roles
+        string[] roleNames = { "Admin" };
+        foreach (var roleName in roleNames)
+        {
+            var roleExist = await roleManager.RoleExistsAsync(roleName);
+            if (!roleExist)
+            {
+                await roleManager.CreateAsync(new IdentityRole(roleName));
+            }
+        }
+
+        // 3. Handle Initial Admin from Config (Production Setup)
+        var adminEmail = configuration["ADMIN_EMAIL"];
+        if (!string.IsNullOrEmpty(adminEmail))
+        {
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            if (adminUser != null)
+            {
+                if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                    logger.LogInformation("--> Assigned Admin role to: {AdminEmail}", adminEmail);
+                }
+            }
+        }
+
+        if (!seedSampleData) return;
+
+        // Security: Only seed sample data (which includes test users with weak passwords) in Development
+        if (!env.IsDevelopment())
+        {
+            logger.LogWarning("Skipping sample data seeding (Environment is not Development).");
+            return;
+        }
+
+        // 4. Add Test User
         var testUserEmail = "test@example.com";
         var user = await userManager.FindByEmailAsync(testUserEmail);
 
@@ -25,8 +62,14 @@ public static class DbInitializer
             };
             await userManager.CreateAsync(user, "Password123!");
         }
+        
+        // Ensure test user is Admin
+        if (!await userManager.IsInRoleAsync(user, "Admin"))
+        {
+            await userManager.AddToRoleAsync(user, "Admin");
+        }
 
-        // 2b. Add Friend User
+        // 5. Add Friend User
         var friendEmail = "friend@example.com";
         var friendUser = await userManager.FindByEmailAsync(friendEmail);
 
@@ -48,17 +91,19 @@ public static class DbInitializer
             return;   // DB has been seeded
         }
 
+        logger.LogInformation("--> Seeding Sample Data...");
+
         // 4. Add Seed Data
         var whiskies = new Whiskey[]
         {
             new Whiskey 
             { 
-                 Name = "Buffalo Trace", 
-                 Distillery = "Buffalo Trace", 
-                 Region = "Kentucky", 
-                 Type = "Bourbon", 
-                 ABV = 45,
-                 GeneralNotes = "A solid daily drinker. Notes of vanilla, caramel, and a hint of spice."
+                Name = "Buffalo Trace", 
+                Distillery = "Buffalo Trace", 
+                Region = "Kentucky", 
+                Type = "Bourbon", 
+                ABV = 45,
+                GeneralNotes = "A solid daily drinker. Notes of vanilla, caramel, and a hint of spice."
             },
             new Whiskey 
             { 

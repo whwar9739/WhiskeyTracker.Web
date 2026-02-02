@@ -75,11 +75,11 @@ Follow these instructions to get the project running on your local machine.
 * **Data Export:** Export collection to CSV/Excel.
 * **Global Ratings:** Refactor static whiskey ratings to be an average of all tasting session scores.
 * **Automated Unit Testing:** Add a test suite (xUnit or NUnit) to verify business logic and prevent regressions.
-* **CI/CD Pipeline:** Add the ability to automatically deploy on merge to the main branch
 * **Social Features:** Allow users to share their collections and tasting notes with friends.
 * **Admin Dashboard:** Add an admin dashboard to manage users and collections.
 * **Mobile App:** Add a mobile app to access the collection.
 * **API:** Add an API to access the collection.
+* **Clean Build Warnings:** Fix all build warnings.
 
 ## 🤝 Contributing
 
