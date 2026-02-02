@@ -26,9 +26,21 @@ public class BottlesModel : PageModel
         public int VolumePercent { get; set; }
     }
 
-    public async Task OnGetAsync()
+    public int CurrentPage { get; set; } = 1;
+    public int TotalPages { get; set; }
+    public const int PageSize = 50;
+
+    public async Task OnGetAsync(int p = 1)
     {
+        CurrentPage = p;
+
+        var totalBottles = await _context.Bottles.CountAsync();
+        TotalPages = (int)Math.Ceiling(totalBottles / (double)PageSize);
+
         Bottles = await _context.Bottles
+            .OrderBy(b => b.Whiskey.Name)
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
             .Select(b => new BottleViewModel
             {
                 Id = b.Id,

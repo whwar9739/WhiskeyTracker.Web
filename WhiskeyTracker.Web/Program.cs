@@ -114,8 +114,9 @@ using (var scope = app.Services.CreateScope())
     bool seedSampleData = dbSection.GetValue<bool>("SeedOnStartup");
 
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
-    await DbInitializer.Initialize(context, userManager, roleManager, builder.Configuration, seedSampleData, logger);
+    await DbInitializer.Initialize(context, userManager, roleManager, builder.Configuration, seedSampleData, logger, env);
 }
 
 

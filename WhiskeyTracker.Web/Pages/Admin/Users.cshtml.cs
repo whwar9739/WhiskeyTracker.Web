@@ -29,14 +29,18 @@ public class UsersModel : PageModel
         public bool IsAdmin { get; set; }
     }
 
-    public async Task OnGetAsync()
+    public int CurrentPage { get; set; } = 1;
+    public int TotalPages { get; set; }
+    public const int PageSize = 50;
+
+    public async Task OnGetAsync(int p = 1)
     {
+        CurrentPage = p;
+
         // Resolve N+1 issue: Fetch all users in Admin role first
-        // 1. Get the admin role ID
         var adminRole = await _roleManager.FindByNameAsync("Admin");
         var adminRoleId = adminRole?.Id;
 
-        // 2. Get all UserIDs that have this role
         var adminUserIds = new HashSet<string>();
         if (adminRoleId != null)
         {
@@ -47,14 +51,21 @@ public class UsersModel : PageModel
             adminUserIds = new HashSet<string>(adminUserIdsList);
         }
 
-        // 3. Fetch users and map, checking against the HashSet
+        // Pagination: Count total users first
+        var totalUsers = await _context.Users.CountAsync();
+        TotalPages = (int)Math.Ceiling(totalUsers / (double)PageSize);
+
+        // Fetch paginated users
         Users = await _context.Users
+            .OrderBy(u => u.Email)
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
             .Select(u => new UserViewModel
             {
                 Id = u.Id,
                 Email = u.Email,
                 DisplayName = u.DisplayName,
-                IsAdmin = false // Placeholder, set in memory below to avoid complexity in LINQ translation if not needed
+                IsAdmin = false // Placeholder
             })
             .ToListAsync();
 
@@ -104,20 +115,16 @@ public class UsersModel : PageModel
             return RedirectToPage();
         }
 
-        // Cleanup: Tasting Sessions & Notes
-        var sessions = await _context.TastingSessions.Where(s => s.UserId == userId).ToListAsync();
-        _context.TastingSessions.RemoveRange(sessions);
-
-        // Optimizing cleanup:
-        // We need to delete notes that are either BY the user OR attached to bottles OF the user.
-        
-        // 1. Delete all notes BY the user
-        var userNotes = await _context.TastingNotes.Where(n => n.UserId == userId).ToListAsync();
-        _context.TastingNotes.RemoveRange(userNotes);
-
-        // 2. Fetch bottles owned by user
+        // 1. Fetch bottles owned by user to identify all dependencies
         var bottles = await _context.Bottles.Where(b => b.UserId == userId).ToListAsync();
         var bottleIds = bottles.Select(b => b.Id).ToList();
+
+        // 2. Consolidate deletion of all related tasting notes in a single query
+        // Delete notes BY the user OR notes ON bottles owned by the user
+        var notesToDelete = await _context.TastingNotes
+            .Where(n => n.UserId == userId || (n.BottleId.HasValue && bottleIds.Contains(n.BottleId.Value)))
+            .ToListAsync();
+        _context.TastingNotes.RemoveRange(notesToDelete);
 
         // 3. Cleanup BlendComponents involving these bottles
         if (bottleIds.Any())
@@ -126,16 +133,6 @@ public class UsersModel : PageModel
                 .Where(bc => bottleIds.Contains(bc.SourceBottleId) || bottleIds.Contains(bc.InfinityBottleId))
                 .ToListAsync();
             _context.BlendComponents.RemoveRange(blendComponents);
-
-            // 4. Identify remaining notes tied to bottles being deleted (that weren't just deleted as user notes)
-            var userNoteIds = userNotes.Select(un => un.Id).ToHashSet();
-
-            var bottleNotes = await _context.TastingNotes
-                .Where(n => n.BottleId != null && bottleIds.Contains(n.BottleId.Value))
-                .ToListAsync();
-                
-            var notesToDelete = bottleNotes.Where(bn => !userNoteIds.Contains(bn.Id)).ToList();
-            _context.TastingNotes.RemoveRange(notesToDelete);
         }
 
         _context.Bottles.RemoveRange(bottles);

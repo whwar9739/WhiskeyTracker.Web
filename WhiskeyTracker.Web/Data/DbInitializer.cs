@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting; // Added for IHostEnvironment
 using WhiskeyTracker.Web.Data;
 
 namespace WhiskeyTracker.Web.Data;
 
 public static class DbInitializer
 {
-    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, bool seedSampleData, ILogger logger)
+    public static async Task Initialize(AppDbContext context, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, bool seedSampleData, ILogger logger, IHostEnvironment env)
     {
         // 1. Ensure the DB exists
         context.Database.EnsureCreated();
@@ -38,6 +39,13 @@ public static class DbInitializer
         }
 
         if (!seedSampleData) return;
+
+        // Security: Only seed sample data (which includes test users with weak passwords) in Development
+        if (!env.IsDevelopment())
+        {
+            logger.LogWarning("Skipping sample data seeding (Environment is not Development).");
+            return;
+        }
 
         // 4. Add Test User
         var testUserEmail = "test@example.com";

@@ -25,9 +25,21 @@ public class CollectionsModel : PageModel
         public string? OwnerName { get; set; }
     }
 
-    public async Task OnGetAsync()
+    public int CurrentPage { get; set; } = 1;
+    public int TotalPages { get; set; }
+    public const int PageSize = 50;
+
+    public async Task OnGetAsync(int p = 1)
     {
+        CurrentPage = p;
+
+        var totalCollections = await _context.Collections.CountAsync();
+        TotalPages = (int)Math.Ceiling(totalCollections / (double)PageSize);
+
         Collections = await _context.Collections
+            .OrderBy(c => c.Name)
+            .Skip((CurrentPage - 1) * PageSize)
+            .Take(PageSize)
             .Select(c => new CollectionViewModel
             {
                 Id = c.Id,

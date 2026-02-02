@@ -54,29 +54,37 @@ public class MaintenanceModel : PageModel
             .Where(bc => bc.SourceBottle == null || bc.InfinityBottle == null);
     }
 
+    private const int MaxScanResults = 100;
+
     private async Task ScanForOrphans()
     {
         Orphans.Clear();
 
-        var badBottles = await GetOrphanedBottles().ToListAsync();
+        var badBottles = await GetOrphanedBottles().Take(MaxScanResults).ToListAsync();
         foreach (var b in badBottles)
         {
             Orphans.Add(new OrphanRecord { EntityType = "Bottle", Identifier = $"ID: {b.Id}", Reason = "Missing Collection or User" });
         }
 
-        var invalidMembers = await GetOrphanedMembers().ToListAsync();
+        if (Orphans.Count >= MaxScanResults) return;
+
+        var invalidMembers = await GetOrphanedMembers().Take(MaxScanResults).ToListAsync();
         foreach (var m in invalidMembers)
         {
             Orphans.Add(new OrphanRecord { EntityType = "CollectionMember", Identifier = $"U: {m.UserId}, C: {m.CollectionId}", Reason = "Missing User or Collection" });
         }
 
-        var invalidNotes = await GetOrphanedNotes().ToListAsync();
+        if (Orphans.Count >= MaxScanResults) return;
+
+        var invalidNotes = await GetOrphanedNotes().Take(MaxScanResults).ToListAsync();
         foreach (var n in invalidNotes)
         {
             Orphans.Add(new OrphanRecord { EntityType = "TastingNote", Identifier = $"ID: {n.Id}", Reason = "Missing Bottle" });
         }
 
-        var invalidBlends = await GetOrphanedBlends().ToListAsync();
+        if (Orphans.Count >= MaxScanResults) return;
+
+        var invalidBlends = await GetOrphanedBlends().Take(MaxScanResults).ToListAsync();
         foreach (var bc in invalidBlends)
         {
             Orphans.Add(new OrphanRecord { EntityType = "BlendComponent", Identifier = $"ID: {bc.Id}", Reason = "Missing Source or Target Bottle" });

@@ -21,6 +21,13 @@
         </form>
     </div>
 
+    @if (Model.Orphans.Count >= 100)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> <strong>Scan Limit Reached:</strong> Showing the first 100 orphaned records. More may exist. Please perform cleanup to see additional records.
+        </div>
+    }
+
     @if (TempData["Message"] != null)
     {
         <div class="alert alert-info alert-dismissible fade show" role="alert">
