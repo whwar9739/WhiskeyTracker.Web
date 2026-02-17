@@ -7,10 +7,10 @@ resources:
   - app-deployment.yaml
   - postgres.yaml
   
-# secretGenerator:
-#   - name: whiskey-secrets
-#     envs:
-#       - .env
+secretGenerator:
+  - name: whiskey-secrets
+    envs:
+      - .env
 
 patches:
   - path: patches/nfs-server.yaml
