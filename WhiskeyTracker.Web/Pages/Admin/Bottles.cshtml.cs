@@ -47,9 +47,9 @@ public class BottlesModel : PageModel
             .Select(b => new BottleViewModel
             {
                 Id = b.Id,
-                WhiskeyName = b.Whiskey!.Name ?? "Unknown Whiskey",
-                CollectionName = b.Collection!.Name ?? "No Collection",
-                OwnerEmail = b.Purchaser!.Email ?? "No Owner",
+                WhiskeyName = b.Whiskey?.Name ?? "Unknown Whiskey",
+                CollectionName = b.Collection?.Name ?? "No Collection",
+                OwnerEmail = b.Purchaser?.Email ?? "No Owner",
                 Status = b.Status,
                 VolumePercent = b.CapacityMl > 0 ? (int)((double)b.CurrentVolumeMl / b.CapacityMl * 100) : 0
             })
@@ -92,4 +92,5 @@ public class BottlesModel : PageModel
         return RedirectToPage();
     }
 }
+
 
