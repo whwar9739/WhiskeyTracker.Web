@@ -27,8 +27,8 @@ public class AddBottleModel : PageModel
 
     public string WhiskeyName { get; set; } = string.Empty;
 
-    public SelectList Collections { get; set; }
-    public SelectList Purchasers { get; set; }
+    public SelectList Collections { get; set; } = default!;
+    public SelectList Purchasers { get; set; } = default!;
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -73,6 +73,7 @@ public class AddBottleModel : PageModel
         {
             // Reload lists if validation fails
              var userId = _userManager.GetUserId(User);
+             if (userId == null) return Challenge();
              var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, NewBottle.CollectionId, NewBottle.UserId);
              Collections = dropdowns.Collections;
              Purchasers = dropdowns.Purchasers;
@@ -89,7 +90,7 @@ public class AddBottleModel : PageModel
         {
              ModelState.AddModelError("", "You do not have access to add bottles to this collection.");
              // Reload lists even on manual error
-             var userId = _userManager.GetUserId(User);
+             var userId = _userManager.GetUserId(User)!;
              var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, NewBottle.CollectionId, NewBottle.UserId);
              Collections = dropdowns.Collections;
              Purchasers = dropdowns.Purchasers;
@@ -101,4 +102,5 @@ public class AddBottleModel : PageModel
 
         return RedirectToPage("./Details", new { id = NewBottle.WhiskeyId });
     }
+
 }

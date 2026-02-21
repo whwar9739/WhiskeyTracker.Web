@@ -50,7 +50,7 @@ public class InfinityModel : PageModel
 
         BlendComponents = await _context.BlendComponents
             .Include(bc => bc.SourceBottle)
-            .ThenInclude(sb => sb.Whiskey)
+            .ThenInclude(sb => sb!.Whiskey)
             .Where(bc => bc.InfinityBottleId == id)
             .OrderByDescending(bc => bc.DateAdded)
             .ToListAsync();

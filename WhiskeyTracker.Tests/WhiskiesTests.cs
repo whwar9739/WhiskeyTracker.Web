@@ -336,7 +336,7 @@ public class WhiskiesTests : TestBase
         // Assert
         Assert.IsType<RedirectToPageResult>(result);
         var updatedWhiskey = await context.Whiskies.FindAsync(1);
-        Assert.Equal("Updated Name", updatedWhiskey.Name);
+        Assert.Equal("Updated Name", updatedWhiskey!.Name);
     }
 
     [Fact]
@@ -361,7 +361,7 @@ public class WhiskiesTests : TestBase
         // Assert
         Assert.IsType<RedirectToPageResult>(result);
         var updatedWhiskey = await context.Whiskies.FindAsync(1);
-        Assert.Equal("New Fresh Notes", updatedWhiskey.GeneralNotes);
+        Assert.Equal("New Fresh Notes", updatedWhiskey!.GeneralNotes);
     }
 
     [Fact]
@@ -416,7 +416,7 @@ public class WhiskiesTests : TestBase
 
         var pageModel = new EditModel(context, mockEnv.Object)
         {
-            Whiskey = await context.Whiskies.FindAsync(1),
+            Whiskey = (await context.Whiskies.FindAsync(1))!,
             ImageUpload = mockFile.Object
         };
 

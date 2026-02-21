@@ -55,24 +55,7 @@ public class BottleTests : TestBase
         Assert.False(pageModel.NewBottle.IsInfinityBottle);     // Default False
     }
 
-    // --- Helper to Mock User ---
-    private void SetMockUser(PageModel page, string userId)
-    {
-        var claims = new List<System.Security.Claims.Claim>
-        {
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
-        };
-        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
-        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
 
-        page.PageContext = new Microsoft.AspNetCore.Mvc.RazorPages.PageContext
-        {
-            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
-            {
-                User = claimsPrincipal
-            }
-        };
-    }
 
     [Fact]
     public async Task AddBottle_SavesNewBottle_OnPost()

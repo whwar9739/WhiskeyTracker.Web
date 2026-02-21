@@ -8,7 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="display-6"><span class="text-primary">♾️</span> Infinity Blend</h1>
-            <p class="lead text-muted">@Model.Bottle.Whiskey.Name</p>
+            <p class="lead text-muted">@Model.Bottle.Whiskey?.Name</p>
         </div>
         <a asp-page="/Whiskies/Details" asp-route-id="@Model.Bottle.WhiskeyId" class="btn btn-outline-secondary">
             &larr; Back to Bottle
@@ -20,9 +20,9 @@
         <div class="col-md-4 mb-4">
             <div class="card shadow-sm h-100">
                 <div class="card-body text-center">
-                    @if (!string.IsNullOrEmpty(Model.Bottle.Whiskey.ImageFileName))
+                    @if (!string.IsNullOrEmpty(Model.Bottle.Whiskey?.ImageFileName))
                     {
-                        <img src="~/images/@Model.Bottle.Whiskey.ImageFileName" class="img-fluid rounded mb-3" style="max-height: 200px;" alt="Bottle Image" />
+                        <img src="~/images/@Model.Bottle.Whiskey!.ImageFileName" class="img-fluid rounded mb-3" style="max-height: 200px;" alt="Bottle Image" />
                     }
                     <h5 class="card-title">Current Status</h5>
                     <div class="display-4 my-3">
@@ -71,7 +71,7 @@
                                                     @if (component.SourceBottle != null)
                                                     {
                                                         <a asp-page="/Whiskies/Details" asp-route-id="@component.SourceBottle.WhiskeyId" class="text-decoration-none text-dark">
-                                                            @component.SourceBottle.Whiskey.Name
+                                                            @component.SourceBottle.Whiskey?.Name
                                                         </a>
                                                     }
                                                     else
