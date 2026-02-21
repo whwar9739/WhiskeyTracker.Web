@@ -71,7 +71,8 @@ public class EditBottleModel : PageModel
         if (!ModelState.IsValid)
         {
             // Reload Lists
-             var userId = _userManager.GetUserId(User)!;
+             var userId = _userManager.GetUserId(User);
+             if (userId == null) return Challenge();
              var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, Bottle.CollectionId, Bottle.UserId);
              Collections = dropdowns.Collections;
              Purchasers = dropdowns.Purchasers;
@@ -125,4 +126,5 @@ public class EditBottleModel : PageModel
 
         return RedirectToPage("./Details", new { id = Bottle.WhiskeyId });
     }
+
 }
