@@ -41,7 +41,7 @@ public class BottlesModel : PageModel
         TotalPages = (int)Math.Ceiling(totalBottles / (double)PageSize);
 
         Bottles = await _context.Bottles
-            .OrderBy(b => b.Whiskey!.Name)
+            .OrderBy(b => b.Whiskey?.Name)
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize)
             .Select(b => new BottleViewModel
@@ -92,3 +92,4 @@ public class BottlesModel : PageModel
         return RedirectToPage();
     }
 }
+
