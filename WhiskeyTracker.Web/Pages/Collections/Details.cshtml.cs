@@ -27,12 +27,13 @@ public class DetailsModel : PageModel
         var userId = _userManager.GetUserId(User);
         if (userId == null) return Challenge();
 
-        Collection = await _context.Collections
+        var collection = await _context.Collections
             .Include(c => c.Members)
             .ThenInclude(m => m.User)
             .FirstOrDefaultAsync(c => c.Id == id);
 
-        if (Collection == null) return NotFound();
+        if (collection == null) return NotFound();
+        Collection = collection;
 
         // Check if user is a member
         var membership = Collection.Members.FirstOrDefault(m => m.UserId == userId);

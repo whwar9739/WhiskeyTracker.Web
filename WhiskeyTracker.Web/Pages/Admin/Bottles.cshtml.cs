@@ -41,15 +41,15 @@ public class BottlesModel : PageModel
         TotalPages = (int)Math.Ceiling(totalBottles / (double)PageSize);
 
         Bottles = await _context.Bottles
-            .OrderBy(b => b.Whiskey.Name)
+            .OrderBy(b => b.Whiskey!.Name)
             .Skip((CurrentPage - 1) * PageSize)
             .Take(PageSize)
             .Select(b => new BottleViewModel
             {
                 Id = b.Id,
-                WhiskeyName = b.Whiskey.Name ?? "Unknown Whiskey",
-                CollectionName = b.Collection.Name ?? "No Collection",
-                OwnerEmail = b.Purchaser.Email ?? "No Owner",
+                WhiskeyName = b.Whiskey!.Name ?? "Unknown Whiskey",
+                CollectionName = b.Collection!.Name ?? "No Collection",
+                OwnerEmail = b.Purchaser!.Email ?? "No Owner",
                 Status = b.Status,
                 VolumePercent = b.CapacityMl > 0 ? (int)((double)b.CurrentVolumeMl / b.CapacityMl * 100) : 0
             })

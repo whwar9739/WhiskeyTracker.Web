@@ -86,8 +86,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // In Kubernetes, the Ingress Controller behaves as the proxy.
     // Since we don't know the exact Pod CIDR, we trust standard private ranges.
     // For simplicity in this environment, we will permit all proxies.
-    options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
+    options.KnownIPNetworks.Clear();
     options.ForwardLimit = null; // Disable limit to handle Nginx -> K8s Ingress -> Pod
 });
 builder.Services.AddSingleton(TimeProvider.System);

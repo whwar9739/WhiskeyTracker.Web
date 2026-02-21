@@ -25,10 +25,10 @@ public class CollectionInvitationTests : TestBase
         await context.SaveChangesAsync();
 
         var mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            new Mock<IUserStore<ApplicationUser>>().Object, null, null, null, null, null, null, null, null);
+            new Mock<IUserStore<ApplicationUser>>().Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         mockUserManager.Setup(um => um.GetUserId(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).Returns(ownerId);
-        mockUserManager.Setup(um => um.FindByEmailAsync(inviteeEmail)).ReturnsAsync((ApplicationUser)null);
+        mockUserManager.Setup(um => um.FindByEmailAsync(inviteeEmail)).ReturnsAsync((ApplicationUser?)null);
 
         var pageModel = new InviteModel(context, mockUserManager.Object)
         {
@@ -75,7 +75,7 @@ public class CollectionInvitationTests : TestBase
         await context.SaveChangesAsync();
 
         var mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            new Mock<IUserStore<ApplicationUser>>().Object, null, null, null, null, null, null, null, null);
+            new Mock<IUserStore<ApplicationUser>>().Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         mockUserManager.Setup(um => um.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).ReturnsAsync(invitee);
 
@@ -92,7 +92,7 @@ public class CollectionInvitationTests : TestBase
         Assert.Equal(CollectionRole.Editor, membership.Role);
         
         var updatedInvite = await context.CollectionInvitations.FindAsync(invite.Id);
-        Assert.Equal(InvitationStatus.Accepted, updatedInvite.Status);
+        Assert.Equal(InvitationStatus.Accepted, updatedInvite!.Status);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public class CollectionInvitationTests : TestBase
         await context.SaveChangesAsync();
 
         var mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            new Mock<IUserStore<ApplicationUser>>().Object, null, null, null, null, null, null, null, null);
+            new Mock<IUserStore<ApplicationUser>>().Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         mockUserManager.Setup(um => um.GetUserId(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).Returns(nonMemberId);
 
@@ -141,7 +141,7 @@ public class CollectionInvitationTests : TestBase
         await context.SaveChangesAsync();
 
         var mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            new Mock<IUserStore<ApplicationUser>>().Object, null, null, null, null, null, null, null, null);
+            new Mock<IUserStore<ApplicationUser>>().Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         mockUserManager.Setup(um => um.GetUserId(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).Returns(ownerId);
         mockUserManager.Setup(um => um.FindByEmailAsync(inviteeEmail)).ReturnsAsync(invitee);
@@ -181,7 +181,7 @@ public class CollectionInvitationTests : TestBase
         await context.SaveChangesAsync();
 
         var mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            new Mock<IUserStore<ApplicationUser>>().Object, null, null, null, null, null, null, null, null);
+            new Mock<IUserStore<ApplicationUser>>().Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         mockUserManager.Setup(um => um.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).ReturnsAsync(invitee);
 
@@ -194,7 +194,7 @@ public class CollectionInvitationTests : TestBase
         // ASSERT
         Assert.IsType<RedirectToPageResult>(result);
         var updatedInvite = await context.CollectionInvitations.FindAsync(invite.Id);
-        Assert.Equal(InvitationStatus.Declined, updatedInvite.Status);
+        Assert.Equal(InvitationStatus.Declined, updatedInvite!.Status);
         
         // Ensure no membership was created
         var membership = await context.CollectionMembers.AnyAsync(m => m.CollectionId == 1 && m.UserId == inviteeId);
@@ -222,7 +222,7 @@ public class CollectionInvitationTests : TestBase
         await context.SaveChangesAsync();
 
         var mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            new Mock<IUserStore<ApplicationUser>>().Object, null, null, null, null, null, null, null, null);
+            new Mock<IUserStore<ApplicationUser>>().Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         mockUserManager.Setup(um => um.GetUserId(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).Returns(ownerId);
 

@@ -27,7 +27,7 @@ public class WizardTests
     {
         var store = new Mock<Microsoft.AspNetCore.Identity.IUserStore<ApplicationUser>>();
         return new Microsoft.AspNetCore.Identity.UserManager<ApplicationUser>(
-            store.Object, null, null, null, null, null, null, null, null);
+            store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
     }
 
     // Helper to Initialize PageModel with TempData AND Mock User
@@ -183,7 +183,7 @@ public class WizardTests
 
         // ASSERT
         var dbBottle = await context.Bottles.FindAsync(bottle.Id);
-        Assert.Equal(0, dbBottle.CurrentVolumeMl);
-        Assert.Equal(BottleStatus.Empty, dbBottle.Status);
+        Assert.Equal(0, dbBottle!.CurrentVolumeMl);
+        Assert.Equal(BottleStatus.Empty, dbBottle!.Status);
     }
 }

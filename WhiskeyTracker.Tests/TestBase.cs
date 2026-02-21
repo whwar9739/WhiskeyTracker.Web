@@ -16,11 +16,11 @@ public class TestBase
         return new AppDbContext(options);
     }
 
-    protected UserManager<ApplicationUser> GetMockUserManager(AppDbContext context = null)
+    protected UserManager<ApplicationUser> GetMockUserManager(AppDbContext? context = null)
     {
         var store = new Mock<IUserStore<ApplicationUser>>();
         var mockUserManager = new Mock<UserManager<ApplicationUser>>(
-            store.Object, null, null, null, null, null, null, null, null);
+            store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
         
         // Setup GetUserId to return the user ID from claims
         mockUserManager.Setup(um => um.GetUserId(It.IsAny<System.Security.Claims.ClaimsPrincipal>()))

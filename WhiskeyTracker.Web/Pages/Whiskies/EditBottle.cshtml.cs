@@ -71,7 +71,7 @@ public class EditBottleModel : PageModel
         if (!ModelState.IsValid)
         {
             // Reload Lists
-             var userId = _userManager.GetUserId(User);
+             var userId = _userManager.GetUserId(User)!;
              var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, Bottle.CollectionId, Bottle.UserId);
              Collections = dropdowns.Collections;
              Purchasers = dropdowns.Purchasers;
@@ -97,7 +97,7 @@ public class EditBottleModel : PageModel
              {
                  ModelState.AddModelError("", "You do not have access to move the bottle to this collection.");
                  // Reload Lists
-                 var userId = _userManager.GetUserId(User);
+                 var userId = _userManager.GetUserId(User)!;
                  var dropdowns = await _collectionViewModelService.GetDropdownsAsync(userId, Bottle.CollectionId, Bottle.UserId);
                  Collections = dropdowns.Collections;
                  Purchasers = dropdowns.Purchasers;
