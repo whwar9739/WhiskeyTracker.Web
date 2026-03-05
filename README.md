@@ -81,7 +81,8 @@ Follow these instructions to get the project running on your local machine.
 * **Admin Dashboard:** Add an admin dashboard to manage users and collections. ([#84](https://github.com/ferrinHouse/WhiskeyTracker.Web/issues/84))
 * **Mobile App:** Add a mobile app to access the collection. ([#85](https://github.com/ferrinHouse/WhiskeyTracker.Web/issues/85))
 * **API:** Add an API to access the collection. ([#86](https://github.com/ferrinHouse/WhiskeyTracker.Web/issues/86))
-* **Clean Build Warnings:** Fix all build warnings. ([#87](https://github.com/ferrinHouse/WhiskeyTracker.Web/issues/87))
+* ~~**Clean Build Warnings:** Fix all build warnings. ([#87](https://github.com/ferrinHouse/WhiskeyTracker.Web/issues/87))~~
+* ~~**Align Form Fields:** Adding a whiskey form matches editing a whiskey form. ([#71](https://github.com/ferrinHouse/WhiskeyTracker.Web/issues/71))~~
 
 ## 🤝 Contributing
 
