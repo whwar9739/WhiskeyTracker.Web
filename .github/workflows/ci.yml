@@ -119,16 +119,16 @@ jobs:
         echo "Local code latest: $LOCAL_MIGRATION"
         
         if [ "$DB_MIGRATION" != "$LOCAL_MIGRATION" ]; then
-          echo "HAS_NEW_MIGRATIONS=true" >> $GITHUB_ENV
+          echo "HAS_NEW_MIGRATIONS=true" >> $GITHUB_OUTPUT
           echo "New migration detected: $LOCAL_MIGRATION"
         else
-          echo "HAS_NEW_MIGRATIONS=false" >> $GITHUB_ENV
+          echo "HAS_NEW_MIGRATIONS=false" >> $GITHUB_OUTPUT
           echo "No new migrations found."
         fi
       continue-on-error: true
 
     - name: Backup Database
-      if: env.HAS_NEW_MIGRATIONS == 'true'
+      if: steps.check_migrations.outputs.HAS_NEW_MIGRATIONS == 'true'
       run: |
         TIMESTAMP=$(date +%Y%m%d_%H%M%S)
         echo "Streaming backup from DB pod to App PVC (/app/backups)..."
