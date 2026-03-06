@@ -82,6 +82,30 @@ jobs:
     - name: Apply Infrastructure
       run: kubectl apply -k k8s/
 
+    - name: Start Loader Pod
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: content-loader
+        spec:
+          containers:
+          - name: loader
+            image: alpine  # Lightweight, has tar
+            command: ["sleep", "3600"]
+            volumeMounts:
+            - mountPath: /app
+              name: app-storage
+          volumes:
+          - name: app-storage
+            persistentVolumeClaim:
+              claimName: whiskey-app-pvc
+        EOF
+        
+        echo "Waiting for loader pod..."
+        kubectl wait --for=condition=Ready pod/content-loader --timeout=60s
+
     - name: Check for Pending Migrations
       id: check_migrations
       run: |
@@ -116,30 +140,6 @@ jobs:
         # Keep last 7 days of backups on PVC
         kubectl exec content-loader -- find /app/backups -name "*.sql" -mtime +7 -delete
       continue-on-error: true
-
-    - name: Start Loader Pod
-      run: |
-        cat <<EOF | kubectl apply -f -
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          name: content-loader
-        spec:
-          containers:
-          - name: loader
-            image: alpine  # Lightweight, has tar
-            command: ["sleep", "3600"]
-            volumeMounts:
-            - mountPath: /app
-              name: app-storage
-          volumes:
-          - name: app-storage
-            persistentVolumeClaim:
-              claimName: whiskey-app-pvc
-        EOF
-        
-        echo "Waiting for loader pod..."
-        kubectl wait --for=condition=Ready pod/content-loader --timeout=60s
 
     - name: Copy Files to NFS
       run: |
