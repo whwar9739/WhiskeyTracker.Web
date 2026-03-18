@@ -89,7 +89,7 @@ public class WizardTests
         
         var updatedBottle = await context.Bottles.FindAsync(bottle.Id);
         // 1.5 oz * 29.5735 = 44.36025 -> rounded to 44
-        Assert.Equal(750 - 44, updatedBottle.CurrentVolumeMl);
+        Assert.Equal(750 - 44, updatedBottle!.CurrentVolumeMl);
         Assert.Equal(BottleStatus.Opened, updatedBottle.Status);
 
         var note = await context.TastingNotes.FirstAsync();

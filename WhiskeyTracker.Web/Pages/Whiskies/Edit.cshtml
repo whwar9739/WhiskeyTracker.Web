@@ -10,6 +10,8 @@
 <div class="row">
     <div class="col-md-6">
         <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            
             <input type="hidden" asp-for="Whiskey.Id" />
 
             <input type="hidden" asp-for="Whiskey.ImageFileName" />
@@ -42,11 +44,13 @@
             <div class="form-group mb-3">
                 <label asp-for="Whiskey.Region" class="form-label"></label>
                 <input asp-for="Whiskey.Region" class="form-control" />
+                <span asp-validation-for="Whiskey.Region" class="text-danger"></span>
             </div>
 
             <div class="form-group mb-3">
                 <label asp-for="Whiskey.Type" class="form-label"></label>
                 <input asp-for="Whiskey.Type" class="form-control" placeholder="e.g. Single Malt" />
+                <span asp-validation-for="Whiskey.Type" class="text-danger"></span>
             </div>
 
             <div class="row">
@@ -65,6 +69,7 @@
             <div class="form-group mb-3">
                 <label asp-for="Whiskey.CaskType" class="form-label"></label>
                 <input asp-for="Whiskey.CaskType" class="form-control" placeholder="e.g. Sherry Oak" />
+                <span asp-validation-for="Whiskey.CaskType" class="text-danger"></span>
             </div>
 
             <div class="form-group mb-3">

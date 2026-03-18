@@ -1,5 +1,6 @@
 //WhiskeyTracker.Web/Data/Whiskey.cs
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace WhiskeyTracker.Web.Data;
 
@@ -37,7 +38,10 @@ public class Whiskey
     [MaxLength(2000)]
     public string? GeneralNotes { get; set; }
 
+    [ValidateNever]
     public List<Bottle> Bottles { get; set; } = new();
+    
+    [ValidateNever]
     public List<TastingNote> TastingNotes { get; set; } = new();
 
     // We'll add complex fields like Ratings, Notes, and Images in later slices!
