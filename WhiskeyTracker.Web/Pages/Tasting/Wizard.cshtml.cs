@@ -121,11 +121,6 @@ public class WizardModel : PageModel
             ModelState.AddModelError("SelectedWhiskeyId", "You must select either a Bottle or a Whiskey.");
         }
 
-        if (string.IsNullOrWhiteSpace(NewNote.Notes))
-        {
-            ModelState.AddModelError("NewNote.Notes", "Tasting notes are required.");
-        }
-
         // Re-establish relationships
         NewNote.TastingSessionId = sessionId;
         NewNote.OrderIndex = await _context.TastingNotes.CountAsync(n => n.TastingSessionId == sessionId) + 1;
