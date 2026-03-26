@@ -73,6 +73,17 @@ public class WizardModel : PageModel
         // --- EDIT MODE: update an existing note ---
         if (EditNoteId.HasValue)
         {
+            // Remove navigation-property errors that ASP.NET Core can't bind
+            ModelState.Remove("NewNote.TastingSession");
+            ModelState.Remove("NewNote.Whiskey");
+            ModelState.Remove("NewNote.Bottle");
+
+            if (!ModelState.IsValid)
+            {
+                await LoadPageData(sessionId);
+                return Page();
+            }
+
             var note = await _context.TastingNotes
                 .Include(n => n.Bottle)
                 .FirstOrDefaultAsync(n => n.Id == EditNoteId.Value && n.TastingSessionId == sessionId);
