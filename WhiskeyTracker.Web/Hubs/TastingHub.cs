@@ -14,9 +14,9 @@ public class TastingHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"session_{sessionId}");
     }
 
-    public async Task NotifyWhiskeyAdded(string sessionId, int whiskeyId)
+    public async Task NotifyWhiskeyAdded(string sessionId, string whiskeyName, string userName)
     {
-        await Clients.Group($"session_{sessionId}").SendAsync("WhiskeyAdded", whiskeyId);
+        await Clients.Group($"session_{sessionId}").SendAsync("WhiskeyAdded", whiskeyName, userName);
     }
 
     public async Task NotifyCurrentWhiskeyChanged(string sessionId, int lineupIndex)
@@ -29,8 +29,8 @@ public class TastingHub : Hub
         await Clients.Group($"session_{sessionId}").SendAsync("ParticipantJoined", userName);
     }
 
-    public async Task NotifyNoteUpdated(string sessionId, int noteId)
+    public async Task NotifyNoteUpdated(string sessionId, string userName)
     {
-        await Clients.Group($"session_{sessionId}").SendAsync("NoteUpdated", noteId);
+        await Clients.Group($"session_{sessionId}").SendAsync("NoteUpdated", userName);
     }
 }

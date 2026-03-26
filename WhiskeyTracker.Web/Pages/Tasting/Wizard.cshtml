@@ -423,28 +423,48 @@
             .withAutomaticReconnect()
             .build();
 
-        connection.on("WhiskeyAdded", function (whiskeyId) {
-            // Toast notification
-            const toast = $('<div class="toast-container position-fixed bottom-0 end-0 p-3"><div class="toast show align-items-center text-white bg-success border-0" role="alert"><div class="d-flex"><div class="toast-body"><i class="bi bi-info-circle me-2"></i>A new whiskey was added to the session! Refreshing...</div></div></div></div>');
-            $('body').append(toast);
-            setTimeout(() => { location.reload(); }, 2000);
+        function showToast(title, message, icon, color, showButton = false) {
+            const toastId = 'toast-' + Date.now();
+            const toastHtml = `
+                <div id="${toastId}" class="toast show align-items-center text-white bg-${color} border-0 mb-2 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${icon} me-2"></i><strong>${title}</strong>: ${message}
+                            ${showButton ? `<button type="button" class="btn btn-sm btn-light ms-2 px-3 py-0" onclick="location.reload()">Refresh Lineup</button>` : ''}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>`;
+            
+            if (!$('#toast-container').length) {
+                $('body').append('<div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1060"></div>');
+            }
+            $('#toast-container').append(toastHtml);
+            
+            // Auto-remove after 8 seconds
+            setTimeout(() => {
+                const $t = $(`#${toastId}`);
+                if ($t.length) {
+                    $t.fadeOut('slow', function() { $(this).remove(); });
+                }
+            }, 8000);
+        }
+
+        connection.on("WhiskeyAdded", function (whiskeyName, userName) {
+            showToast('New Whiskey', `${userName} added <strong>${whiskeyName}</strong> to the lineup!`, 'bi-plus-circle-fill', 'success', true);
         });
 
-        connection.on("NoteUpdated", function (noteId) {
-            // Toast notification
-            const toast = $('<div class="toast-container position-fixed bottom-0 end-0 p-3"><div class="toast show align-items-center text-white bg-info border-0" role="alert"><div class="d-flex"><div class="toast-body"><i class="bi bi-pencil-square me-2"></i>A tasting note was updated! Refreshing...</div></div></div></div>');
-            $('body').append(toast);
-            setTimeout(() => { location.reload(); }, 2000);
+        connection.on("NoteUpdated", function (userName) {
+            showToast('Note Updated', `${userName} updated their tasting note.`, 'bi-pencil-square', 'info', true);
         });
 
         connection.on("ParticipantJoined", function (userName) {
-            const badge = $('<span class="badge rounded-pill bg-info text-dark border shadow-sm ms-1 animated pulse"><i class="bi bi-person-plus-fill"></i> ' + userName + '</span>');
-            $('#participants-list').prepend(badge);
-            
-            // Show a temporary toast for joining
-            const toast = $('<div class="toast-container position-fixed bottom-0 end-0 p-3"><div class="toast show align-items-center text-white bg-info border-0" role="alert"><div class="d-flex"><div class="toast-body"><i class="bi bi-person-plus-fill me-2"></i>' + userName + ' joined the session!</div></div></div></div>');
-            $('body').append(toast);
-            setTimeout(() => { toast.fadeOut('slow', () => toast.remove()); }, 3000);
+            // Update the UI list immediately
+            if ($('#participants-list').length) {
+                const badge = $('<span class="badge rounded-pill bg-info text-dark border shadow-sm ms-1 animated pulse"><i class="bi bi-person-plus-fill"></i> ' + userName + '</span>');
+                $('#participants-list').append(badge);
+            }
+            showToast('Participant Joined', `${userName} joined the session!`, 'bi-person-plus-fill', 'primary');
         });
 
         connection.start().then(function () {

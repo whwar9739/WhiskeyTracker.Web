@@ -5,6 +5,7 @@ using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Pages.Tasting;
 using Microsoft.EntityFrameworkCore;
 using WhiskeyTracker.Web.Hubs;
+using WhiskeyTracker.Web.Services;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 
@@ -12,23 +13,6 @@ namespace WhiskeyTracker.Tests;
 
 public class CollaborativeSessionTests : TestBase
 {
-    private void SetMockTempData(PageModel page)
-    {
-        var mockTempData = new Mock<ITempDataDictionary>();
-        page.TempData = mockTempData.Object;
-    }
-
-    private Mock<IHubContext<TastingHub>> GetMockHubContext()
-    {
-        var mockHubContext = new Mock<IHubContext<TastingHub>>();
-        var mockClients = new Mock<IHubClients>();
-        var mockClientProxy = new Mock<IClientProxy>();
-
-        mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
-        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
-        
-        return mockHubContext;
-    }
 
     [Fact]
     public async Task WizardModel_OnGet_AllowsOwner()
@@ -41,7 +25,8 @@ public class CollaborativeSessionTests : TestBase
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var model = new WizardModel(context, hubMock.Object);
+        var service = new TastingSessionService(context, hubMock.Object);
+        var model = new WizardModel(context, hubMock.Object, service);
         SetMockUser(model, ownerId);
 
         // ACT
@@ -65,7 +50,8 @@ public class CollaborativeSessionTests : TestBase
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var model = new WizardModel(context, hubMock.Object);
+        var service = new TastingSessionService(context, hubMock.Object);
+        var model = new WizardModel(context, hubMock.Object, service);
         SetMockUser(model, tasterId);
 
         // ACT
@@ -88,7 +74,8 @@ public class CollaborativeSessionTests : TestBase
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var model = new WizardModel(context, hubMock.Object);
+        var service = new TastingSessionService(context, hubMock.Object);
+        var model = new WizardModel(context, hubMock.Object, service);
         SetMockUser(model, strangerId);
 
         // ACT
@@ -110,9 +97,9 @@ public class CollaborativeSessionTests : TestBase
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var model = new IndexModel(context, hubMock.Object);
+        var service = new TastingSessionService(context, hubMock.Object);
+        var model = new IndexModel(context, service);
         SetMockUser(model, joinerId);
-        SetMockTempData(model);
 
         // ACT
         var result = await model.OnPostJoinAsync("JOINME");
@@ -161,7 +148,8 @@ public class CollaborativeSessionTests : TestBase
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var model = new WizardModel(context, hubMock.Object)
+        var service = new TastingSessionService(context, hubMock.Object);
+        var model = new WizardModel(context, hubMock.Object, service)
         {
             SelectedWhiskeyId = whiskey.Id,
             PourAmountOz = 1.0,

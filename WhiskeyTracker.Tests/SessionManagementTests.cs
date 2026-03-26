@@ -8,46 +8,12 @@ using Xunit;
 using WhiskeyTracker.Web.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
+using WhiskeyTracker.Web.Services;
 
 namespace WhiskeyTracker.Tests;
 
-public class SessionManagementTests
+public class SessionManagementTests : TestBase
 {
-    private AppDbContext GetInMemoryContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
-    }
-
-    private void SetMockUser(PageModel page, string userId)
-    {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, userId)
-        };
-        var identity = new ClaimsIdentity(claims, "TestAuthType");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-
-        page.PageContext = new PageContext
-        {
-            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
-            {
-                User = claimsPrincipal
-            }
-        };
-    }
-
-    private Mock<IHubContext<TastingHub>> GetMockHubContext()
-    {
-        var mockHubContext = new Mock<IHubContext<TastingHub>>();
-        var mockClients = new Mock<IHubClients>();
-        var mockClientProxy = new Mock<IClientProxy>();
-        mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
-        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
-        return mockHubContext;
-    }
 
     [Fact]
     public async Task Index_OnGet_ReturnsOnlyUsersSessions()
@@ -65,7 +31,8 @@ public class SessionManagementTests
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var pageModel = new WhiskeyTracker.Web.Pages.Tasting.IndexModel(context, hubMock.Object);
+        var service = new TastingSessionService(context, hubMock.Object);
+        var pageModel = new WhiskeyTracker.Web.Pages.Tasting.IndexModel(context, service);
         SetMockUser(pageModel, userId);
 
         // ACT

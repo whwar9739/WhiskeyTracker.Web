@@ -8,50 +8,12 @@ using Moq;
 using WhiskeyTracker.Web.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using WhiskeyTracker.Web.Services;
 
 namespace WhiskeyTracker.Tests;
 
-public class WizardTests
+public class WizardTests : TestBase
 {
-    private AppDbContext GetInMemoryContext()
-    {
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-            .Options;
-        return new AppDbContext(options);
-    }
-
-    private void SetMockUser(PageModel page, string userId)
-    {
-        var claims = new List<System.Security.Claims.Claim>
-        {
-            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId)
-        };
-        var identity = new System.Security.Claims.ClaimsIdentity(claims, "TestAuthType");
-        var claimsPrincipal = new System.Security.Claims.ClaimsPrincipal(identity);
-
-        page.PageContext = new PageContext
-        {
-            HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
-            {
-                User = claimsPrincipal
-            }
-        };
-
-        // Mock TempData using Moq
-        var mockTempData = new Mock<ITempDataDictionary>();
-        page.TempData = mockTempData.Object;
-    }
-
-    private Mock<IHubContext<TastingHub>> GetMockHubContext()
-    {
-        var mockHubContext = new Mock<IHubContext<TastingHub>>();
-        var mockClients = new Mock<IHubClients>();
-        var mockClientProxy = new Mock<IClientProxy>();
-        mockHubContext.Setup(h => h.Clients).Returns(mockClients.Object);
-        mockClients.Setup(c => c.Group(It.IsAny<string>())).Returns(mockClientProxy.Object);
-        return mockHubContext;
-    }
 
     [Fact]
     public async Task OnPost_ConvertsOzToMl_AndUpdatesBottle()
@@ -85,7 +47,8 @@ public class WizardTests
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var pageModel = new WizardModel(context, hubMock.Object)
+        var service = new TastingSessionService(context, hubMock.Object);
+        var pageModel = new WizardModel(context, hubMock.Object, service)
         {
             SelectedBottleId = bottle.Id,
             PourAmountOz = 1.5,
@@ -140,7 +103,8 @@ public class WizardTests
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var pageModel = new WizardModel(context, hubMock.Object)
+        var service = new TastingSessionService(context, hubMock.Object);
+        var pageModel = new WizardModel(context, hubMock.Object, service)
         {
             SelectedBottleId = bottle.Id,
             PourAmountOz = 1.0,
@@ -168,7 +132,8 @@ public class WizardTests
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var pageModel = new WizardModel(context, hubMock.Object)
+        var service = new TastingSessionService(context, hubMock.Object);
+        var pageModel = new WizardModel(context, hubMock.Object, service)
         {
             PourAmountOz = null, // Missing
             NewNote = new TastingNote { Notes = "Missing pour" }
@@ -224,7 +189,8 @@ public class WizardTests
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var pageModel = new WizardModel(context, hubMock.Object)
+        var service = new TastingSessionService(context, hubMock.Object);
+        var pageModel = new WizardModel(context, hubMock.Object, service)
         {
             EditNoteId = existingNote.Id,
             SelectedBottleId = bottle.Id,
@@ -263,7 +229,8 @@ public class WizardTests
         await context.SaveChangesAsync();
 
         var hubMock = GetMockHubContext();
-        var pageModel = new WizardModel(context, hubMock.Object)
+        var service = new TastingSessionService(context, hubMock.Object);
+        var pageModel = new WizardModel(context, hubMock.Object, service)
         {
             SelectedWhiskeyId = whiskey.Id,
             PourAmountOz = 1.0,

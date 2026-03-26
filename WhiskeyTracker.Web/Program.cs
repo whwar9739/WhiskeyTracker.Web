@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Hubs;
+using WhiskeyTracker.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -105,6 +106,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardLimit = null; // Disable limit to handle Nginx -> K8s Ingress -> Pod
 });
 builder.Services.AddSingleton(TimeProvider.System);
+
+builder.Services.AddScoped<TastingSessionService>();
 
 var app = builder.Build();
 

@@ -5,18 +5,19 @@ using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
+using WhiskeyTracker.Web.Services;
 
 namespace WhiskeyTracker.Web.Pages.Tasting;
 
 public class IndexModel : PageModel
 {
     private readonly AppDbContext _context;
-    private readonly IHubContext<TastingHub> _hubContext;
+    private readonly TastingSessionService _sessionService;
 
-    public IndexModel(AppDbContext context, IHubContext<TastingHub> hubContext)
+    public IndexModel(AppDbContext context, TastingSessionService sessionService)
     {
         _context = context;
-        _hubContext = hubContext;
+        _sessionService = sessionService;
     }
 
     public List<TastingSession> Sessions { get; set; } = new();
@@ -40,35 +41,16 @@ public class IndexModel : PageModel
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return RedirectToPage("/Account/Login");
 
-        var session = await _context.TastingSessions
-            .Include(s => s.Participants)
-            .FirstOrDefaultAsync(s => s.JoinCode == joinCode);
+        var userDisplayName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name;
+        
+        var (success, sessionId, error) = await _sessionService.JoinSessionAsync(joinCode, userId, userDisplayName);
 
-        if (session == null)
+        if (!success)
         {
-            TempData["ErrorMessage"] = "Invalid Join Code.";
+            TempData["ErrorMessage"] = error;
             return RedirectToPage();
         }
 
-        if (session.UserId == userId || session.Participants.Any(p => p.UserId == userId))
-        {
-            return RedirectToPage("./Wizard", new { sessionId = session.Id });
-        }
-
-        _context.SessionParticipants.Add(new SessionParticipant
-        {
-            TastingSessionId = session.Id,
-            UserId = userId,
-            IsDriver = false,
-            JoinedAt = DateTime.UtcNow
-        });
-
-        await _context.SaveChangesAsync();
-        
-        // Notify participants
-        var userDisplayName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name ?? "A friend";
-        await _hubContext.Clients.Group($"session_{session.Id}").SendAsync("ParticipantJoined", userDisplayName);
-
-        return RedirectToPage("./Wizard", new { sessionId = session.Id });
+        return RedirectToPage("./Wizard", new { sessionId });
     }
 }

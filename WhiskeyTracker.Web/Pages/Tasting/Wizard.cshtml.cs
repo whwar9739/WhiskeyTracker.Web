@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using WhiskeyTracker.Web.Data;
 using WhiskeyTracker.Web.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using WhiskeyTracker.Web.Services;
+using System.Security.Claims;
 
 namespace WhiskeyTracker.Web.Pages.Tasting;
 
@@ -13,11 +15,13 @@ public class WizardModel : PageModel
 {
     private readonly AppDbContext _context;
     private readonly IHubContext<TastingHub> _hubContext;
+    private readonly TastingSessionService _sessionService;
 
-    public WizardModel(AppDbContext context, IHubContext<TastingHub> hubContext)
+    public WizardModel(AppDbContext context, IHubContext<TastingHub> hubContext, TastingSessionService sessionService)
     {
         _context = context;
         _hubContext = hubContext;
+        _sessionService = sessionService;
     }
 
     public TastingSession Session { get; set; } = new();
@@ -170,7 +174,8 @@ public class WizardModel : PageModel
             await _context.SaveChangesAsync();
 
             // Notify participants via SignalR
-            await _hubContext.Clients.Group($"session_{sessionId}").SendAsync("NoteUpdated", note.Id);
+            var userDisplayName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name ?? "A friend";
+            await _hubContext.Clients.Group($"session_{sessionId}").SendAsync("NoteUpdated", userDisplayName);
 
             TempData["SuccessMessage"] = "Pour updated!";
             return RedirectToPage(new { sessionId });
@@ -256,10 +261,11 @@ public class WizardModel : PageModel
         await UpdateSharedLineupAsync(sessionId, NewNote.WhiskeyId, NewNote.BottleId);
         
         // Notify participants via SignalR
-        await _hubContext.Clients.Group($"session_{sessionId}").SendAsync("WhiskeyAdded", NewNote.WhiskeyId);
+        var whiskey = await _context.Whiskies.FindAsync(NewNote.WhiskeyId);
+        var authorName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name ?? "A friend";
+        await _hubContext.Clients.Group($"session_{sessionId}").SendAsync("WhiskeyAdded", whiskey?.Name ?? "Whiskey", authorName);
 
         await _context.SaveChangesAsync();
-
         TempData["SuccessMessage"] = "Tasting note added successfully! Ready for the next pour!";
 
         // Redirect to the SAME page to refresh the list and clear the form
@@ -369,36 +375,22 @@ public class WizardModel : PageModel
         }
     }
 
-    public async Task<IActionResult> OnPostJoinAsync(string joinCode)
+    public async Task<IActionResult> OnPostJoinAsync(int sessionId, string joinCode)
     {
-        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return RedirectToPage("/Account/Login");
 
-        var session = await _context.TastingSessions
-            .Include(s => s.Participants)
-            .FirstOrDefaultAsync(s => s.JoinCode == joinCode);
+        var userDisplayName = User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name;
+        
+        var (success, resultSessionId, error) = await _sessionService.JoinSessionAsync(joinCode, userId, userDisplayName);
 
-        if (session == null)
+        if (!success)
         {
-            TempData["ErrorMessage"] = "Invalid Join Code.";
-            return RedirectToPage("/Tasting/Index");
+            TempData["ErrorMessage"] = error;
+            return RedirectToPage(new { sessionId });
         }
 
-        if (session.UserId == userId || session.Participants.Any(p => p.UserId == userId))
-        {
-            return RedirectToPage(new { sessionId = session.Id });
-        }
-
-        _context.SessionParticipants.Add(new SessionParticipant
-        {
-            TastingSessionId = session.Id,
-            UserId = userId,
-            IsDriver = false,
-            JoinedAt = DateTime.UtcNow
-        });
-
-        await _context.SaveChangesAsync();
-        return RedirectToPage(new { sessionId = session.Id });
+        return RedirectToPage(new { sessionId = resultSessionId });
     }
 
     private async Task UpdateSharedLineupAsync(int sessionId, int whiskeyId, int? bottleId)
