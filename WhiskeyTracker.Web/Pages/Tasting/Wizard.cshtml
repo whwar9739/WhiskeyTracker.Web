@@ -80,10 +80,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="NewNote.Notes" class="form-label">Impressions</label>
+                            <label asp-for="NewNote.Notes" class="form-label">Impressions <span class="text-muted">(optional)</span></label>
                             <textarea asp-for="NewNote.Notes" class="form-control" rows="3"
                                 placeholder="Nose, Palate, Finish..."></textarea>
-                            <span asp-validation-for="NewNote.Notes" class="text-danger"></span>
                         </div>
 
                         <div class="d-grid">

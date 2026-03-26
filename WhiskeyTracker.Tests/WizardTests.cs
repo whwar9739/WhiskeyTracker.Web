@@ -97,6 +97,54 @@ public class WizardTests
     }
 
     [Fact]
+    public async Task OnPost_Succeeds_WhenNotesAreEmpty()
+    {
+        // ARRANGE
+        using var context = GetInMemoryContext();
+        var userId = "test-user";
+        var whiskey = new Whiskey { Name = "Test Whiskey", Distillery = "Test Distillery" };
+        context.Whiskies.Add(whiskey);
+        await context.SaveChangesAsync();
+
+        var collection = new Collection { Name = "Test Collection" };
+        context.Collections.Add(collection);
+        await context.SaveChangesAsync();
+
+        context.CollectionMembers.Add(new CollectionMember { CollectionId = collection.Id, UserId = userId, Role = CollectionRole.Owner });
+
+        var bottle = new Bottle
+        {
+            WhiskeyId = whiskey.Id,
+            CollectionId = collection.Id,
+            UserId = userId,
+            CurrentVolumeMl = 750,
+            Status = BottleStatus.Full
+        };
+        context.Bottles.Add(bottle);
+        await context.SaveChangesAsync();
+
+        var session = new TastingSession { Title = "Test Session", UserId = userId, Date = DateOnly.FromDateTime(DateTime.Now) };
+        context.TastingSessions.Add(session);
+        await context.SaveChangesAsync();
+
+        var pageModel = new WizardModel(context)
+        {
+            SelectedBottleId = bottle.Id,
+            PourAmountOz = 1.0,
+            NewNote = new TastingNote { Notes = null } // No notes
+        };
+        SetMockUser(pageModel, userId);
+
+        // ACT
+        var result = await pageModel.OnPostAsync(session.Id);
+
+        // ASSERT
+        Assert.IsType<RedirectToPageResult>(result);
+        var note = await context.TastingNotes.FirstAsync();
+        Assert.Null(note.Notes);
+    }
+
+    [Fact]
     public async Task OnPost_Fails_WhenOzIsMissing()
     {
         // ARRANGE
