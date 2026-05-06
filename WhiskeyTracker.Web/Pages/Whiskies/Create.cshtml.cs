@@ -48,19 +48,29 @@ public class CreateModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
-            var response = await httpClient.GetAsync(GooglePhotoUrl);
-            if (response.IsSuccessStatusCode)
+            if (Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uri) &&
+                uri.Scheme == Uri.UriSchemeHttps &&
+                (uri.Host.EndsWith(".googleusercontent.com") || uri.Host.EndsWith(".googleapis.com")))
             {
-                var imageBytes = await response.Content.ReadAsByteArrayAsync();
-                var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
-                NewWhiskey.ImageFileName = uniqueFileName;
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
+                var response = await httpClient.GetAsync(GooglePhotoUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                    var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
+                    var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
+                    NewWhiskey.ImageFileName = uniqueFileName;
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("GooglePhotoUrl", "Invalid Google Photo URL.");
+                return Page();
             }
         }
         else if (ImageUpload != null)
