@@ -62,7 +62,11 @@ public class EditModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
-            using var httpClient = new HttpClient();
+            if (Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uriResult) &&
+                uriResult.Scheme == Uri.UriSchemeHttps &&
+                (uriResult.Host.EndsWith(".googleusercontent.com") || uriResult.Host.EndsWith(".googleapis.com")))
+            {
+                using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
             var response = await httpClient.GetAsync(GooglePhotoUrl);
             if (response.IsSuccessStatusCode)
@@ -84,9 +88,11 @@ public class EditModel : PageModel
                 Whiskey.ImageFileName = uniqueFileName;
             }
         }
+        }
         else if (ImageUpload != null)
         {
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ImageUpload.FileName;
+            var extension = Path.GetExtension(ImageUpload.FileName);
+            var uniqueFileName = Guid.NewGuid().ToString() + extension;
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
