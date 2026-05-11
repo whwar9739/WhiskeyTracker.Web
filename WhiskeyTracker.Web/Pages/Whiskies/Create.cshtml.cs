@@ -48,24 +48,32 @@ public class CreateModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
-            var response = await httpClient.GetAsync(GooglePhotoUrl);
-            if (response.IsSuccessStatusCode)
+            // Security: Validate GooglePhotoUrl to prevent Server-Side Request Forgery (SSRF)
+            if (Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uri) &&
+                uri.Scheme == Uri.UriSchemeHttps &&
+                (uri.Host.EndsWith(".googleusercontent.com") || uri.Host.EndsWith(".googleapis.com")))
             {
-                var imageBytes = await response.Content.ReadAsByteArrayAsync();
-                var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
-                NewWhiskey.ImageFileName = uniqueFileName;
+                using var httpClient = new HttpClient();
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
+                var response = await httpClient.GetAsync(GooglePhotoUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                    var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
+                    var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
+                    NewWhiskey.ImageFileName = uniqueFileName;
+                }
             }
         }
         else if (ImageUpload != null)
         {
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ImageUpload.FileName;
+            // Security: Only preserve the file extension and use a GUID for the filename to prevent Path Traversal
+            var extension = Path.GetExtension(ImageUpload.FileName);
+            var uniqueFileName = Guid.NewGuid().ToString() + extension;
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
 
             if (!Directory.Exists(uploadsFolder))
@@ -74,7 +82,7 @@ public class CreateModel : PageModel
             }
 
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            
+
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await ImageUpload.CopyToAsync(fileStream);
