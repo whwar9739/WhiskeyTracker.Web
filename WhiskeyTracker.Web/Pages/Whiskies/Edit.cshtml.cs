@@ -62,6 +62,16 @@ public class EditModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
+            // Security constraint: Validate external URLs to prevent SSRF vulnerabilities.
+            // Enforce HTTPS scheme and restrict requests only to trusted Google domains.
+            if (!Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uri) ||
+                uri.Scheme != Uri.UriSchemeHttps ||
+                (!uri.Host.EndsWith(".googleusercontent.com") && !uri.Host.EndsWith(".googleapis.com")))
+            {
+                ModelState.AddModelError("GooglePhotoUrl", "Invalid or unauthorized image URL.");
+                return Page();
+            }
+
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
             var response = await httpClient.GetAsync(GooglePhotoUrl);
@@ -74,7 +84,7 @@ public class EditModel : PageModel
 
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
                 await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
-                
+
                 if (!string.IsNullOrEmpty(Whiskey.ImageFileName))
                 {
                     var oldPath = Path.Combine(uploadsFolder, Whiskey.ImageFileName);

@@ -48,6 +48,15 @@ public class CreateModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
+            // Security constraint: Validate external URLs to prevent SSRF vulnerabilities.
+            // Enforce HTTPS scheme and restrict requests only to trusted Google domains.
+            if (!Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uri) ||
+                uri.Scheme != Uri.UriSchemeHttps ||
+                (!uri.Host.EndsWith(".googleusercontent.com") && !uri.Host.EndsWith(".googleapis.com")))
+            {
+                ModelState.AddModelError("GooglePhotoUrl", "Invalid or unauthorized image URL.");
+                return Page();
+            }
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
             var response = await httpClient.GetAsync(GooglePhotoUrl);
@@ -57,7 +66,7 @@ public class CreateModel : PageModel
                 var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
                 var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                
+
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
                 await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
                 NewWhiskey.ImageFileName = uniqueFileName;
@@ -74,7 +83,7 @@ public class CreateModel : PageModel
             }
 
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            
+
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await ImageUpload.CopyToAsync(fileStream);
