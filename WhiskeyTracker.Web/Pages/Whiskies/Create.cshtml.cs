@@ -48,9 +48,18 @@ public class CreateModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
+            // Security: Prevent SSRF by validating the URL
+            if (!Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var parsedUri) ||
+                parsedUri.Scheme != Uri.UriSchemeHttps ||
+                (!parsedUri.Host.EndsWith(".googleusercontent.com") && !parsedUri.Host.EndsWith(".googleapis.com")))
+            {
+                ModelState.AddModelError("GooglePhotoUrl", "Invalid image source URL.");
+                return Page();
+            }
+
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
-            var response = await httpClient.GetAsync(GooglePhotoUrl);
+            var response = await httpClient.GetAsync(parsedUri);
             if (response.IsSuccessStatusCode)
             {
                 var imageBytes = await response.Content.ReadAsByteArrayAsync();
