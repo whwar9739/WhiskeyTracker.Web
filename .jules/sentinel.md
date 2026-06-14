@@ -2,3 +2,8 @@
 **Vulnerability:** Any authenticated user could create, edit, or delete entries in the master `Whiskey` global directory because `Create.cshtml.cs`, `Edit.cshtml.cs`, and `Delete.cshtml.cs` under `Pages/Whiskies` lacked authorization attributes. Only the `/Admin` folder was protected by convention.
 **Learning:** Razor Pages convention-based folder authorization (`AuthorizeFolder("/Admin")`) does not automatically protect administrative-level entities that reside outside the designated admin folder.
 **Prevention:** Always explicitly annotate page models with `[Authorize(Roles = "Admin")]` for global entity modification pages, regardless of folder structure.
+
+## 2025-02-20 - SSRF and Path Traversal in Image Uploads
+**Vulnerability:** The `GooglePhotoUrl` fetching logic in `Create.cshtml.cs` and `Edit.cshtml.cs` did not validate user-provided URLs or restrict `HttpClient` redirects, leading to a Server-Side Request Forgery (SSRF) risk. Additionally, the local file upload mechanism used `ImageUpload.FileName` directly concatenated with a GUID, which could allow Path Traversal attacks if a malicious filename was provided.
+**Learning:** External URLs provided by users must be validated for protocol and trusted hosts. File names from user uploads must never be trusted; only the file extension should be preserved.
+**Prevention:** Enforce `UriKind.Absolute`, restrict schemes to `UriSchemeHttps`, limit hosts to trusted domains (`*.googleusercontent.com`, `*.googleapis.com`), and explicitly disable auto-redirects on `HttpClientHandler` (`AllowAutoRedirect = false`) when fetching resources. For file uploads, always use `Guid.NewGuid().ToString() + Path.GetExtension(ImageUpload.FileName)` to generate safe, unique filenames.
