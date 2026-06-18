@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WhiskeyTracker.Web.Data;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 namespace WhiskeyTracker.Web.Pages.Whiskies;
 
@@ -48,19 +50,30 @@ public class CreateModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
-            var response = await httpClient.GetAsync(GooglePhotoUrl);
-            if (response.IsSuccessStatusCode)
+            if (Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uriResult)
+                && uriResult.Scheme == Uri.UriSchemeHttps
+                && (uriResult.Host.EndsWith(".googleusercontent.com") || uriResult.Host.EndsWith(".googleapis.com")))
             {
-                var imageBytes = await response.Content.ReadAsByteArrayAsync();
-                var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
-                NewWhiskey.ImageFileName = uniqueFileName;
+                var handler = new HttpClientHandler { AllowAutoRedirect = false };
+                using var httpClient = new HttpClient(handler);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GooglePhotoToken);
+                var response = await httpClient.GetAsync(uriResult);
+                if (response.IsSuccessStatusCode)
+                {
+                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                    var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
+                    var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
+                    NewWhiskey.ImageFileName = uniqueFileName;
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("GooglePhotoUrl", "Invalid Google Photo URL.");
+                return Page();
             }
         }
         else if (ImageUpload != null)
@@ -74,7 +87,7 @@ public class CreateModel : PageModel
             }
 
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            
+
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await ImageUpload.CopyToAsync(fileStream);
