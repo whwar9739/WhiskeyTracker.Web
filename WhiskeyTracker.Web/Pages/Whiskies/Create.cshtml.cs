@@ -48,19 +48,31 @@ public class CreateModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
-            using var httpClient = new HttpClient();
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
-            var response = await httpClient.GetAsync(GooglePhotoUrl);
-            if (response.IsSuccessStatusCode)
+            // SSRF Mitigation: Validate URL scheme and host
+            if (Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uri) &&
+                uri.Scheme == Uri.UriSchemeHttps &&
+                (uri.Host.EndsWith(".googleusercontent.com") || uri.Host.EndsWith(".googleapis.com")))
             {
-                var imageBytes = await response.Content.ReadAsByteArrayAsync();
-                var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
-                if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-                await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
-                NewWhiskey.ImageFileName = uniqueFileName;
+                using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+                using var httpClient = new HttpClient(handler);
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
+                var response = await httpClient.GetAsync(uri);
+                if (response.IsSuccessStatusCode)
+                {
+                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                    var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
+                    var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
+                    NewWhiskey.ImageFileName = uniqueFileName;
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("GooglePhotoUrl", "Invalid Google Photo URL. Must be HTTPS and from a trusted Google domain.");
+                return Page();
             }
         }
         else if (ImageUpload != null)
@@ -74,7 +86,7 @@ public class CreateModel : PageModel
             }
 
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            
+
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await ImageUpload.CopyToAsync(fileStream);
