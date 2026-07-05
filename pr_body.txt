@@ -1,0 +1,5 @@
+🚨 Severity: CRITICAL
+💡 Vulnerability: Server-Side Request Forgery (SSRF) when fetching Google Photo URLs via unconstrained HttpClient.GetAsync().
+🎯 Impact: Attackers could provide internal URLs or other unapproved locations, causing the server to fetch unauthorized resources.
+🔧 Fix: Added strict HTTPS verification, domain checking (only allowing googleusercontent.com and googleapis.com), and disabled auto-redirects.
+✅ Verification: Ran dotnet test and verified that tests still pass.
