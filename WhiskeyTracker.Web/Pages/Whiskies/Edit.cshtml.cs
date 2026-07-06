@@ -62,7 +62,16 @@ public class EditModel : PageModel
 
         if (!string.IsNullOrEmpty(GooglePhotoUrl) && !string.IsNullOrEmpty(GooglePhotoToken))
         {
-            using var httpClient = new HttpClient();
+            if (!Uri.TryCreate(GooglePhotoUrl, UriKind.Absolute, out var uri) ||
+                uri.Scheme != Uri.UriSchemeHttps ||
+                (!uri.Host.EndsWith(".googleusercontent.com") && !uri.Host.EndsWith(".googleapis.com")))
+            {
+                ModelState.AddModelError(string.Empty, "Invalid image URL.");
+                return Page();
+            }
+
+            var handler = new HttpClientHandler { AllowAutoRedirect = false };
+            using var httpClient = new HttpClient(handler);
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
             var response = await httpClient.GetAsync(GooglePhotoUrl);
             if (response.IsSuccessStatusCode)
@@ -74,7 +83,7 @@ public class EditModel : PageModel
 
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
                 await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
-                
+
                 if (!string.IsNullOrEmpty(Whiskey.ImageFileName))
                 {
                     var oldPath = Path.Combine(uploadsFolder, Whiskey.ImageFileName);
