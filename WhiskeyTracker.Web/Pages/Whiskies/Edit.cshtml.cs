@@ -70,7 +70,8 @@ public class EditModel : PageModel
                 return Page();
             }
 
-            using var httpClient = new HttpClient();
+            using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+            using var httpClient = new HttpClient(handler);
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
             var response = await httpClient.GetAsync(GooglePhotoUrl);
             if (response.IsSuccessStatusCode)
@@ -82,7 +83,7 @@ public class EditModel : PageModel
 
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
                 await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
-                
+
                 if (!string.IsNullOrEmpty(Whiskey.ImageFileName))
                 {
                     var oldPath = Path.Combine(uploadsFolder, Whiskey.ImageFileName);
@@ -94,7 +95,7 @@ public class EditModel : PageModel
         }
         else if (ImageUpload != null)
         {
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ImageUpload.FileName;
+            var uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(ImageUpload.FileName);
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
