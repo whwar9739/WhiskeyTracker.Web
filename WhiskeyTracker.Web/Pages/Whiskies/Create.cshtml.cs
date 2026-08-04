@@ -65,7 +65,7 @@ public class CreateModel : PageModel
                 var uniqueFileName = Guid.NewGuid().ToString() + ".jpg";
                 var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
                 if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-                
+
                 var filePath = Path.Combine(uploadsFolder, uniqueFileName);
                 await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
                 NewWhiskey.ImageFileName = uniqueFileName;
@@ -73,7 +73,10 @@ public class CreateModel : PageModel
         }
         else if (ImageUpload != null)
         {
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ImageUpload.FileName;
+            // 🛡️ Sentinel: Security fix to prevent path traversal vulnerability.
+            // Instead of trusting the original file name directly, we only preserve the extension.
+            var extension = Path.GetExtension(ImageUpload.FileName);
+            var uniqueFileName = Guid.NewGuid().ToString() + extension;
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
 
             if (!Directory.Exists(uploadsFolder))
@@ -82,7 +85,7 @@ public class CreateModel : PageModel
             }
 
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-            
+
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await ImageUpload.CopyToAsync(fileStream);
