@@ -1,0 +1,5 @@
+🚨 Severity: CRITICAL
+💡 Vulnerability: SSRF via HTTP Auto-Redirects. Despite URL format and host validation, the default HttpClient allows auto-redirects. An attacker could supply a URL pointing to a trusted domain that redirects to an unauthorized internal or external resource, bypassing the check.
+🎯 Impact: This allows Server-Side Request Forgery (SSRF) where the server fetches arbitrary unintended URLs, potentially exposing internal services or aiding in reconnaissance.
+🔧 Fix: Explicitly disabled `AllowAutoRedirect` on the `HttpClient` used to fetch the user-provided Google Photos URL in `Create.cshtml.cs` and `Edit.cshtml.cs`.
+✅ Verification: Ensure the test suite passes, verify that providing an external URL that redirects is not followed, and confirm standard valid URLs work as expected.
