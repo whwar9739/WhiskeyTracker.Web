@@ -56,7 +56,8 @@ public class CreateModel : PageModel
                 return Page();
             }
 
-            using var httpClient = new HttpClient();
+            using var handler = new HttpClientHandler { AllowAutoRedirect = false };
+            using var httpClient = new HttpClient(handler);
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
             var response = await httpClient.GetAsync(GooglePhotoUrl);
             if (response.IsSuccessStatusCode)
@@ -73,7 +74,8 @@ public class CreateModel : PageModel
         }
         else if (ImageUpload != null)
         {
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ImageUpload.FileName;
+            var extension = Path.GetExtension(ImageUpload.FileName);
+            var uniqueFileName = Guid.NewGuid().ToString() + extension;
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
 
             if (!Directory.Exists(uploadsFolder))
