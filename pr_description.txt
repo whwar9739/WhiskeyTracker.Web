@@ -1,0 +1,5 @@
+🚨 Severity: CRITICAL
+💡 Vulnerability: The application was susceptible to an SSRF bypass when fetching external URLs. While the initial URL was validated to only allow trusted Google domains, `HttpClient` automatically follows HTTP redirects by default. An attacker could use an open redirect to point the application toward unvalidated internal or external services.
+🎯 Impact: Attackers could potentially map internal network architecture, access unauthenticated internal APIs, or exfiltrate data by exploiting the auto-redirect behavior of the `HttpClient`.
+🔧 Fix: Updated the instantiation of `HttpClient` in both `Create.cshtml.cs` and `Edit.cshtml.cs` to use an `HttpClientHandler` with `AllowAutoRedirect = false`, preventing the application from automatically following redirects to unvalidated destinations.
+✅ Verification: Ensure the test suite continues to pass (`dotnet test`) and review the updated `.jules/sentinel.md` journal file.
