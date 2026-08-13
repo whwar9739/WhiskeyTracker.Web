@@ -56,7 +56,7 @@ public class CreateModel : PageModel
                 return Page();
             }
 
-            using var httpClient = new HttpClient();
+            using var httpClient = new HttpClient(new HttpClientHandler { AllowAutoRedirect = false });
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", GooglePhotoToken);
             var response = await httpClient.GetAsync(GooglePhotoUrl);
             if (response.IsSuccessStatusCode)
