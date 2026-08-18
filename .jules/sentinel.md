@@ -7,3 +7,8 @@
 **Vulnerability:** The application allowed users to provide a `GooglePhotoUrl` that was passed directly to `HttpClient.GetAsync()` without any validation in `Create.cshtml.cs` and `Edit.cshtml.cs`. This could allow an attacker to make the server send arbitrary HTTP requests to internal or external systems.
 **Learning:** External URLs provided by users must be strictly validated before being used in server-side HTTP requests to prevent SSRF vulnerabilities.
 **Prevention:** Use `Uri.TryCreate` with `UriKind.Absolute` to validate the URL format, enforce HTTPS (`Uri.UriSchemeHttps`), and restrict the host to an allowlist of trusted domains (e.g., `.googleusercontent.com`, `.googleapis.com`).
+
+## 2024-05-19 - Path Traversal in File Uploads
+**Vulnerability:** User-provided filenames in file uploads were directly combined with directory paths without sanitization, leading to a path traversal vulnerability.
+**Learning:** Malicious filenames (e.g., ../../file.txt) can overwrite arbitrary files.
+**Prevention:** Generate unique filenames server-side and extract only the file extension using Path.GetExtension().
