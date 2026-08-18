@@ -94,7 +94,8 @@ public class EditModel : PageModel
         }
         else if (ImageUpload != null)
         {
-            var uniqueFileName = Guid.NewGuid().ToString() + "_" + ImageUpload.FileName;
+            var extension = Path.GetExtension(ImageUpload.FileName);
+            var uniqueFileName = Guid.NewGuid().ToString() + extension;
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
